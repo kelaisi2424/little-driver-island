@@ -1,0 +1,28 @@
+{
+  "name": "小小司机任务岛",
+  "short_name": "小小司机",
+  "description": "5 岁儿童的交通安全教育小游戏，无广告、无充值、无排行榜。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#aee9ff",
+  "theme_color": "#aee9ff",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["education", "kids", "games"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#aee9ff"/>
+      <stop offset="60%" stop-color="#fff5e6"/>
+      <stop offset="100%" stop-color="#c9eeb0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- sun (decorative, may be cropped under maskable) -->
+  <circle cx="412" cy="120" r="34" fill="#ffd166" opacity="0.95"/>
+
+  <!-- cloud -->
+  <g opacity="0.9">
+    <ellipse cx="120" cy="138" rx="32" ry="11" fill="#fff"/>
+    <circle cx="104" cy="124" r="16" fill="#fff"/>
+    <circle cx="132" cy="120" r="13" fill="#fff"/>
+  </g>
+
+  <!-- 主体: 小汽车，全部置于 maskable 安全区内 (中央 80%) -->
+  <g transform="translate(106, 168)">
+    <!-- shadow -->
+    <ellipse cx="150" cy="208" rx="128" ry="11" fill="rgba(0,0,0,0.18)"/>
+    <!-- body -->
+    <rect x="14" y="92" width="272" height="86" rx="30" fill="#ff7e7e"/>
+    <!-- roof -->
+    <path d="M 80 92 L 110 30 Q 116 22 124 22 L 204 22 Q 214 22 220 32 L 248 92 Z" fill="#ff7e7e"/>
+    <!-- roof highlight -->
+    <path d="M 90 90 L 116 34 L 148 34 L 140 90 Z" fill="rgba(255,255,255,0.20)"/>
+    <!-- windows -->
+    <rect x="114" y="40" width="46" height="42" rx="6" fill="#cdeaff"/>
+    <rect x="168" y="40" width="52" height="42" rx="6" fill="#cdeaff"/>
+    <rect x="120" y="46" width="12" height="10" rx="2" fill="rgba(255,255,255,0.75)"/>
+    <!-- door seam -->
+    <line x1="150" y1="94" x2="150" y2="172" stroke="rgba(0,0,0,0.15)" stroke-width="3"/>
+    <!-- license -->
+    <rect x="128" y="146" width="44" height="12" rx="2" fill="rgba(255,255,255,0.75)"/>
+    <!-- headlight -->
+    <circle cx="270" cy="118" r="10" fill="#fff7a3"/>
+    <circle cx="270" cy="118" r="5" fill="#fff"/>
+    <rect x="14" y="112" width="13" height="13" rx="3" fill="#ffd166"/>
+    <!-- eyes -->
+    <circle cx="120" cy="124" r="6" fill="#3a3a3a"/>
+    <circle cx="186" cy="124" r="6" fill="#3a3a3a"/>
+    <!-- smile -->
+    <path d="M 124 142 Q 152 162 182 142" stroke="#3a3a3a" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- wheels -->
+    <circle cx="62" cy="188" r="26" fill="#2a2a2a"/>
+    <circle cx="62" cy="188" r="11" fill="#9a9a9a"/>
+    <circle cx="62" cy="188" r="5" fill="#444"/>
+    <circle cx="238" cy="188" r="26" fill="#2a2a2a"/>
+    <circle cx="238" cy="188" r="11" fill="#9a9a9a"/>
+    <circle cx="238" cy="188" r="5" fill="#444"/>
+  </g>
+</svg>
