@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import type { Level3D } from '../data/levels3d';
 import type { Car3D } from '../data/cars3d';
+import type { DrivingTelemetry } from '../data/challenge3d';
 import { playSound } from '../utils/sound';
 import CarModel from './CarModel';
 import Checkpoints from './Checkpoints';
@@ -26,10 +27,14 @@ interface DrivingSceneProps {
   controlsRef: RefObject<DrivingControls>;
   paused: boolean;
   car?: Car3D;
+  /** v1.7: 共享 telemetry ref，DrivingScene 每帧写入，外面读 */
+  telemetryRef?: RefObject<DrivingTelemetry>;
   onSpeedChange: (speed: number) => void;
   onCheckpointChange: (passed: number) => void;
   onHint: (message: string) => void;
-  onComplete: (stars: number, elapsedSeconds: number) => void;
+  /** v1.7: 通关回调签名扩展 → 多带 telemetry，挑战模式打分用 */
+  onComplete: (stars: number, elapsedSeconds: number, telemetry?: DrivingTelemetry) => void;
+  onTelemetryChange?: (telemetry: DrivingTelemetry) => void;
   onDebugChange?: (debug: DrivingDebugState) => void;
 }
 
@@ -73,10 +78,12 @@ function SceneContent({
   controlsRef,
   paused,
   car,
+  telemetryRef,
   onSpeedChange,
   onCheckpointChange,
   onHint,
   onComplete,
+  onTelemetryChange,
   onDebugChange,
 }: DrivingSceneProps) {
   const groupRef = useRef<THREE.Group | null>(null);
@@ -89,6 +96,15 @@ function SceneContent({
   const smoothSpeedRef = useRef(0);
   const lastDebugRef = useRef(0);
   const lastCollisionRef = useRef(false);
+  // v1.7: telemetry 累加（每帧写入）
+  const collisionsRef = useRef(0);
+  const offRoadAccumRef = useRef(0);
+  const maxSpeedRef = useRef(0);
+  const speedSumRef = useRef(0);
+  const speedSamplesRef = useRef(0);
+  const brakeCountRef = useRef(0);
+  const wasBrakingRef = useRef(false);
+  const lastTelemetryEmitRef = useRef(0);
   const { camera } = useThree();
   const conePositions = useMemo(
     () => level.cones.map((cone) => new THREE.Vector3(cone.x, 0.45, cone.z)),
@@ -101,10 +117,31 @@ function SceneContent({
     completedRef.current = false;
     startRef.current = Date.now();
     smoothSpeedRef.current = 0;
+    // v1.7: telemetry 也清零
+    collisionsRef.current = 0;
+    offRoadAccumRef.current = 0;
+    maxSpeedRef.current = 0;
+    speedSumRef.current = 0;
+    speedSamplesRef.current = 0;
+    brakeCountRef.current = 0;
+    wasBrakingRef.current = false;
+    lastTelemetryEmitRef.current = 0;
+    if (telemetryRef?.current) {
+      const t = telemetryRef.current;
+      t.elapsedTime = 0;
+      t.collisions = 0;
+      t.offRoadTime = 0;
+      t.checkpointPassed = 0;
+      t.brakeCount = 0;
+      t.maxSpeed = 0;
+      t.averageSpeed = 0;
+      t.parkingAccuracy = 0;
+      t.completed = false;
+    }
     onSpeedChange(0);
     onCheckpointChange(0);
     onHint(level.kind === 'parking' ? '慢慢开进 P 车位。' : '按住油门，开始驾驶。');
-  }, [level, onCheckpointChange, onHint, onSpeedChange]);
+  }, [level, onCheckpointChange, onHint, onSpeedChange, telemetryRef]);
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.04);
@@ -122,9 +159,21 @@ function SceneContent({
           lastHitRef.current = now;
           onHint('慢一点，注意安全。');
           playSound('fail');
+          // v1.7: 累加碰撞计数
+          collisionsRef.current += 1;
         }
       }
       lastCollisionRef.current = collision;
+
+      // v1.7: telemetry 累加（每帧）
+      if (offRoad) offRoadAccumRef.current += delta;
+      if (state.speed > maxSpeedRef.current) maxSpeedRef.current = state.speed;
+      speedSumRef.current += state.speed;
+      speedSamplesRef.current += 1;
+      // 刹车按下次数：上一帧未刹这帧刹 → +1
+      const isBraking = activeControls.brake;
+      if (isBraking && !wasBrakingRef.current) brakeCountRef.current += 1;
+      wasBrakingRef.current = isBraking;
 
       if (offRoad && now - lastOffRoadHintRef.current > 1400) {
         lastOffRoadHintRef.current = now;
@@ -153,7 +202,22 @@ function SceneContent({
         playSound('complete');
         const elapsedSeconds = Math.max(8, Math.round((Date.now() - startRef.current) / 1000));
         const stars = level.id === 2 && lastHitRef.current > 0 ? 2 : 3;
-        window.setTimeout(() => onComplete(stars, elapsedSeconds), 500);
+        // v1.7: 把 telemetry 一起送回
+        const telemetry: DrivingTelemetry = {
+          elapsedTime: elapsedSeconds,
+          collisions: collisionsRef.current,
+          offRoadTime: offRoadAccumRef.current,
+          checkpointPassed: passedRef.current,
+          brakeCount: brakeCountRef.current,
+          maxSpeed: maxSpeedRef.current,
+          averageSpeed: speedSamplesRef.current > 0 ? speedSumRef.current / speedSamplesRef.current : 0,
+          parkingAccuracy: level.kind === 'parking'
+            ? Math.hypot(state.position.x, state.position.z - level.finishZ)
+            : 0,
+          completed: true,
+        };
+        if (telemetryRef?.current) Object.assign(telemetryRef.current, telemetry);
+        window.setTimeout(() => onComplete(stars, elapsedSeconds, telemetry), 500);
       }
     }
 
@@ -202,6 +266,28 @@ function SceneContent({
     camera.lookAt(lookAhead);
     smoothSpeedRef.current = THREE.MathUtils.lerp(smoothSpeedRef.current, kmh(state.speed), 0.16);
     onSpeedChange(Math.round(smoothSpeedRef.current));
+
+    // v1.7: telemetry 实时同步给 HUD（每 250ms 一次，避免 setState 频率过高）
+    if (!completedRef.current && (onTelemetryChange || telemetryRef)) {
+      const tNow = performance.now();
+      if (tNow - lastTelemetryEmitRef.current > 250) {
+        lastTelemetryEmitRef.current = tNow;
+        const elapsed = Math.max(0, (Date.now() - startRef.current) / 1000);
+        const tele: DrivingTelemetry = {
+          elapsedTime: Math.round(elapsed),
+          collisions: collisionsRef.current,
+          offRoadTime: offRoadAccumRef.current,
+          checkpointPassed: passedRef.current,
+          brakeCount: brakeCountRef.current,
+          maxSpeed: maxSpeedRef.current,
+          averageSpeed: speedSamplesRef.current > 0 ? speedSumRef.current / speedSamplesRef.current : 0,
+          parkingAccuracy: 0,
+          completed: false,
+        };
+        if (telemetryRef?.current) Object.assign(telemetryRef.current, tele);
+        if (onTelemetryChange) onTelemetryChange(tele);
+      }
+    }
     const debugNow = performance.now();
     if (onDebugChange && debugNow - lastDebugRef.current > 180) {
       lastDebugRef.current = debugNow;

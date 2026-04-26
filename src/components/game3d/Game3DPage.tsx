@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { LEVELS_3D, getLevel3D, validateLevels, type Level3D } from '../../data/levels3d';
 import { CHAPTERS_3D, chapterOfLevel, isChapterEndLevel, type Chapter3D } from '../../data/chapters3d';
 import { useDailyUsage } from '../../hooks/useDailyUsage';
@@ -7,13 +7,24 @@ import { primeVoice, setVoiceEnabled, speak } from '../../utils/speech';
 import { getMuted, playSound, toggleMuted } from '../../utils/sound';
 import {
   addLearningRecord,
+  getChallengeStars,
   loadConfig,
   loadProgress,
   loadSelectedCarId,
+  loadSelectedMode,
   saveConfig,
+  saveSelectedMode,
+  updateChallengeProgress,
   updateLevelProgress,
+  type DrivingMode,
 } from '../../utils/storage';
 import { CARS_3D, getCar3D } from '../../data/cars3d';
+import {
+  getChallengeConfig,
+  scoreChallenge,
+  type ChallengeConfig,
+  type DrivingTelemetry,
+} from '../../data/challenge3d';
 import { awardSticker } from '../../utils/stickers';
 import DrivingScene, { type DrivingDebugState } from '../../three/DrivingScene';
 import { useDrivingControls } from '../../three/useDrivingControls';
@@ -47,6 +58,7 @@ const DEFAULT_CONFIG: ParentConfig = {
   dailyLimit: 3,
   dailyMinutes: 15,
   restAfterLevels: 5,
+  challengeEnabled: true,    // v1.7：默认开启挑战模式入口
 };
 
 function normalizeConfig(config: Partial<ParentConfig>): ParentConfig {
@@ -55,6 +67,7 @@ function normalizeConfig(config: Partial<ParentConfig>): ParentConfig {
     ...merged,
     dailyMinutes: [10, 15, 20].includes(merged.dailyMinutes) ? merged.dailyMinutes : 15,
     restAfterLevels: [3, 5, 8].includes(merged.restAfterLevels) ? merged.restAfterLevels : 5,
+    challengeEnabled: merged.challengeEnabled !== false,
   };
 }
 
@@ -63,18 +76,26 @@ function getUnlocked3DLevel() {
   return Math.min(LEVELS_3D.length, progress.driving3d?.currentLevel ?? 1);
 }
 
-function buildChapterProgress(starsByLevel: Record<string, number>): Record<number, ChapterProgress> {
+function buildChapterProgress(
+  starsByLevel: Record<string, number>,
+  challengeStarsByLevel: Record<string, number>,
+): Record<number, ChapterProgress> {
   const out: Record<number, ChapterProgress> = {};
   for (const ch of CHAPTERS_3D) {
     let completed = 0;
     let totalStars = 0;
+    let challengeCompleted = 0;
+    let challengeStars = 0;
     for (let n = 1; n <= 10; n++) {
       const id = (ch.id - 1) * 10 + n;
       const stars = starsByLevel[String(id)] ?? 0;
       if (stars > 0) completed += 1;
       totalStars += stars;
+      const cStars = challengeStarsByLevel[String(id)] ?? 0;
+      if (cStars > 0) challengeCompleted += 1;
+      challengeStars += cStars;
     }
-    out[ch.id] = { completed, totalStars };
+    out[ch.id] = { completed, totalStars, challengeCompleted, challengeStars };
   }
   return out;
 }
@@ -135,6 +156,32 @@ export default function Game3DPage() {
   // v15: 当前选中车
   const [selectedCarId, setSelectedCarId] = useState<string>(() => loadSelectedCarId() ?? CARS_3D[0].id);
   const selectedCar = useMemo(() => getCar3D(selectedCarId), [selectedCarId]);
+  // v1.7: 当前模式
+  const [selectedMode, setSelectedMode] = useState<DrivingMode>(() => loadSelectedMode());
+  const challengeConfig = useMemo<ChallengeConfig | null>(
+    () => (selectedMode === 'challenge' ? getChallengeConfig(level) : null),
+    [selectedMode, level],
+  );
+  // v1.7: 实时 telemetry（HUD 显示用）+ ref（下层每帧写入）
+  const [telemetry, setTelemetry] = useState<DrivingTelemetry | null>(null);
+  const telemetryRef = useRef<DrivingTelemetry | null>(null);
+  if (!telemetryRef.current) {
+    telemetryRef.current = {
+      elapsedTime: 0,
+      collisions: 0,
+      offRoadTime: 0,
+      checkpointPassed: 0,
+      brakeCount: 0,
+      maxSpeed: 0,
+      averageSpeed: 0,
+      parkingAccuracy: 0,
+      completed: false,
+    };
+  }
+  // v1.7：useCallback 包装 onTelemetryChange，否则触发 DrivingScene 重渲染（油门 BUG 教训）
+  const handleTelemetryChange = useCallback((t: DrivingTelemetry) => {
+    setTelemetry({ ...t });
+  }, []);
   const usage = useDailyUsage(config.dailyMinutes);
 
   useEffect(() => {
@@ -164,10 +211,21 @@ export default function Game3DPage() {
     return (loadProgress().driving3d?.stars as Record<string, number>) ?? {};
   }, [progressVersion]);
 
+  // v1.7: 挑战模式星级（一并刷新）
+  const challengeStarsByLevel = useMemo<Record<string, number>>(() => {
+    progressVersion;
+    return getChallengeStars('driving3d');
+  }, [progressVersion]);
+
   const chapterProgress = useMemo(
-    () => buildChapterProgress(starsByLevel),
-    [starsByLevel],
+    () => buildChapterProgress(starsByLevel, challengeStarsByLevel),
+    [starsByLevel, challengeStarsByLevel],
   );
+
+  const totalChallengeStars = useMemo(() => {
+    progressVersion;
+    return Object.values(challengeStarsByLevel).reduce((sum, s) => sum + (Number(s) || 0), 0);
+  }, [challengeStarsByLevel, progressVersion]);
 
   const startLevel = (nextLevel: Level3D) => {
     if (usage.limitReached) return;
@@ -185,20 +243,58 @@ export default function Game3DPage() {
     setCheckpointPassed(0);
     setPaused(false);
     setStartedAt(Date.now());
+    // v1.7: 清空 telemetry
+    setTelemetry(null);
+    if (telemetryRef.current) {
+      telemetryRef.current.elapsedTime = 0;
+      telemetryRef.current.collisions = 0;
+      telemetryRef.current.offRoadTime = 0;
+      telemetryRef.current.checkpointPassed = 0;
+      telemetryRef.current.brakeCount = 0;
+      telemetryRef.current.maxSpeed = 0;
+      telemetryRef.current.averageSpeed = 0;
+      telemetryRef.current.parkingAccuracy = 0;
+      telemetryRef.current.completed = false;
+    }
     setScreen('playing');
     playSound('engine');
     // v11 hotfix：解锁 iOS 语音 + 朗读关卡任务
     primeVoice();
     lastSpokenRef.current = { text: '', t: 0 };
     window.setTimeout(() => {
-      speak(`小司机准备出发啦。${level.mission}`);
+      speak(
+        selectedMode === 'challenge'
+          ? `挑战模式开始。目标 ${challengeConfig?.targetTime ?? 30} 秒，加油！`
+          : `小司机准备出发啦。${level.mission}`,
+      );
     }, 250);
   };
 
-  const completeLevel = (stars: number, playSeconds: number) => {
-    setLastStars(stars);
+  const completeLevel = (
+    starsFromScene: number,
+    playSeconds: number,
+    finalTelemetry?: DrivingTelemetry,
+  ) => {
+    // v1.7: 普通模式仍走 starsFromScene；挑战模式根据 telemetry 算
+    let actualStars: 1 | 2 | 3 = starsFromScene as 1 | 2 | 3;
+    if (selectedMode === 'challenge' && challengeConfig && finalTelemetry) {
+      actualStars = scoreChallenge(finalTelemetry, challengeConfig, level);
+      // 挑战模式记录到 challenge progress（独立于普通进度）
+      updateChallengeProgress(
+        'driving3d',
+        level.id,
+        actualStars,
+        finalTelemetry.elapsedTime,
+        finalTelemetry.collisions,
+      );
+    }
+    setLastStars(actualStars);
+    setTelemetry(finalTelemetry ?? telemetry);
+
     usage.addUsage(playSeconds);
-    updateLevelProgress('driving3d', level.id, stars);
+    // 普通进度始终更新（即便挑战模式也算"通过过这关"）
+    updateLevelProgress('driving3d', level.id, actualStars);
+
     const nextLevelId = getNextLevelId(level.id);
     const nextSessionLevels = sessionLevels + 1;
     setPendingNextLevelId(nextLevelId);
@@ -224,7 +320,13 @@ export default function Game3DPage() {
     setScreen('complete');
     // v11 hotfix：通关语音
     window.setTimeout(() => {
-      speak(`做得好，完成第 ${level.id} 关啦！`);
+      speak(
+        selectedMode === 'challenge'
+          ? actualStars === 3
+            ? '太厉害了，三颗星！'
+            : `完成第 ${level.id} 关，再挑战一次拿三星！`
+          : `做得好，完成第 ${level.id} 关啦！`,
+      );
     }, 200);
   };
 
@@ -251,12 +353,27 @@ export default function Game3DPage() {
   };
 
   const saveParentConfig = (next: ParentConfig) => {
-    setConfig(normalizeConfig(next));
+    const normalized = normalizeConfig(next);
+    setConfig(normalized);
+    // 如果家长把挑战模式关掉，且当前模式是挑战，自动切回普通
+    if (!normalized.challengeEnabled && selectedMode === 'challenge') {
+      setSelectedMode('easy');
+      saveSelectedMode('easy');
+    }
     usage.refresh();
     setScreen('home');
   };
 
+  // v1.7: 切换模式
+  const switchMode = (mode: DrivingMode) => {
+    if (mode === 'challenge' && config.challengeEnabled === false) return;
+    setSelectedMode(mode);
+    saveSelectedMode(mode);
+    playSound('click');
+  };
+
   const currentChapter = chapterOfLevel(unlockedLevel);
+  const challengeAvailable = config.challengeEnabled !== false;
 
   return (
     <main className="game3d-page">
@@ -275,14 +392,46 @@ export default function Game3DPage() {
             <div className="game3d-preview-car"><span /></div>
           </div>
 
+          {/* v1.7: 模式切换（仅当家长允许挑战模式时显示） */}
+          {challengeAvailable && (
+            <div className="game3d-mode-switch" role="tablist" aria-label="选择模式">
+              <button
+                role="tab"
+                type="button"
+                aria-selected={selectedMode === 'easy'}
+                className={`game3d-mode-tab ${selectedMode === 'easy' ? 'is-active' : ''}`}
+                onClick={() => switchMode('easy')}
+              >
+                <span className="mode-emoji">🎈</span>
+                <span className="mode-name">轻松练习</span>
+                <small>5-7 岁</small>
+              </button>
+              <button
+                role="tab"
+                type="button"
+                aria-selected={selectedMode === 'challenge'}
+                className={`game3d-mode-tab ${selectedMode === 'challenge' ? 'is-active' : ''}`}
+                onClick={() => switchMode('challenge')}
+              >
+                <span className="mode-emoji">🏆</span>
+                <span className="mode-name">挑战闯关</span>
+                <small>8-10 岁 · ⭐ {totalChallengeStars}/300</small>
+              </button>
+            </div>
+          )}
+
           <div className="game3d-home-actions">
             <button
-              className="game3d-primary"
+              className={`game3d-primary ${selectedMode === 'challenge' ? 'game3d-primary-challenge' : ''}`}
               onClick={() => startLevel(getLevel3D(unlockedLevel))}
               disabled={usage.limitReached}
               type="button"
             >
-              {usage.limitReached ? '今天任务完成啦' : `继续第 ${unlockedLevel} 关`}
+              {usage.limitReached
+                ? '今天任务完成啦'
+                : selectedMode === 'challenge'
+                ? `🏆 挑战第 ${unlockedLevel} 关`
+                : `继续第 ${unlockedLevel} 关`}
             </button>
             <button onClick={() => setScreen('chapters')} type="button">章节选关</button>
             <button onClick={() => setScreen('garage')} type="button">
@@ -332,6 +481,7 @@ export default function Game3DPage() {
         <ChapterSelect
           unlockedLevel={unlockedLevel}
           progress={chapterProgress}
+          mode={selectedMode}
           onSelect={(ch) => { setActiveChapter(ch); setScreen('levels'); }}
           onBack={() => setScreen('home')}
         />
@@ -342,13 +492,21 @@ export default function Game3DPage() {
           chapter={activeChapter}
           unlockedLevel={unlockedLevel}
           starsByLevel={starsByLevel}
+          mode={selectedMode}
+          challengeStarsByLevel={challengeStarsByLevel}
           onPick={(id) => startLevel(getLevel3D(id))}
           onBack={() => setScreen('chapters')}
         />
       )}
 
       {screen === 'mission' && (
-        <MissionCard level={level} onStart={enterDriving} onBack={() => setScreen('home')} />
+        <MissionCard
+          level={level}
+          mode={selectedMode}
+          challengeConfig={challengeConfig}
+          onStart={enterDriving}
+          onBack={() => setScreen('home')}
+        />
       )}
 
       {screen === 'playing' && (
@@ -359,10 +517,12 @@ export default function Game3DPage() {
             controlsRef={controlsRef}
             car={selectedCar}
             paused={paused}
+            telemetryRef={telemetryRef as RefObject<DrivingTelemetry>}
             onSpeedChange={setSpeed}
             onCheckpointChange={setCheckpointPassed}
             onHint={setHint}
             onComplete={completeLevel}
+            onTelemetryChange={selectedMode === 'challenge' ? handleTelemetryChange : undefined}
             onDebugChange={import.meta.env.DEV ? setDrivingDebug : undefined}
           />
           {import.meta.env.DEV && <DebugDrivingHud debug={drivingDebug} />}
@@ -372,6 +532,9 @@ export default function Game3DPage() {
             elapsedSeconds={elapsedSeconds}
             checkpointPassed={checkpointPassed}
             muted={muted}
+            mode={selectedMode}
+            challengeConfig={challengeConfig}
+            telemetry={telemetry}
             onPause={() => setPaused((value) => !value)}
             onToggleMute={toggleSound}
             onHome={() => setScreen('home')}
@@ -403,6 +566,9 @@ export default function Game3DPage() {
             level={level}
             stars={lastStars}
             mode={mode}
+            drivingMode={selectedMode}
+            challengeConfig={challengeConfig}
+            telemetry={telemetry}
             chapterStickerId={chapterStickerJustUnlocked}
             nextChapter={nextChapter}
             onNext={goNext}

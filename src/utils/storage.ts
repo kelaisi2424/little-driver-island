@@ -100,6 +100,10 @@ export interface DailyUsage {
 export type GameProgress = Record<string, {
   currentLevel: number;
   stars: Record<string, number>;
+  // v1.7 挑战模式扩展（向后兼容：旧存档没有这些字段时默认为空对象）
+  challengeStars?: Record<string, number>;       // levelId → 1|2|3 stars
+  bestTime?: Record<string, number>;             // levelId → 最佳秒数
+  minCollisions?: Record<string, number>;        // levelId → 最少碰撞数
 }>;
 
 export interface LearningRecord {
@@ -147,6 +151,19 @@ function repairGameProgress(progress: GameProgress): { progress: GameProgress; c
 
   if (!entry.stars || typeof entry.stars !== 'object') {
     entry.stars = {};
+    changed = true;
+  }
+  // v1.7：补齐挑战模式字段（旧存档兼容）
+  if (!entry.challengeStars || typeof entry.challengeStars !== 'object') {
+    entry.challengeStars = {};
+    changed = true;
+  }
+  if (!entry.bestTime || typeof entry.bestTime !== 'object') {
+    entry.bestTime = {};
+    changed = true;
+  }
+  if (!entry.minCollisions || typeof entry.minCollisions !== 'object') {
+    entry.minCollisions = {};
     changed = true;
   }
 
@@ -231,4 +248,80 @@ export function loadSelectedCarId(): string | null {
 
 export function saveSelectedCarId(id: string): void {
   safeSet(KEY_CAR, id);
+}
+
+// ===== v1.7: 当前选择的玩法模式 =====
+const KEY_MODE = 'kdjs:selectedMode:v1';
+export type DrivingMode = 'easy' | 'challenge';
+
+export function loadSelectedMode(): DrivingMode {
+  const raw = safeGet(KEY_MODE);
+  return raw === 'challenge' ? 'challenge' : 'easy';
+}
+
+export function saveSelectedMode(mode: DrivingMode): void {
+  safeSet(KEY_MODE, mode);
+}
+
+// ===== v1.7: 挑战模式进度更新 =====
+// 取每关的最高星级 / 最快时间 / 最少碰撞，永远只升级不退步。
+export function updateChallengeProgress(
+  gameId: string,
+  level: number,
+  stars: 1 | 2 | 3,
+  elapsedSeconds: number,
+  collisions: number,
+): GameProgress {
+  const progress = loadProgress();
+  const entry = progress[gameId] ?? { currentLevel: 1, stars: {} };
+  if (!entry.challengeStars) entry.challengeStars = {};
+  if (!entry.bestTime) entry.bestTime = {};
+  if (!entry.minCollisions) entry.minCollisions = {};
+
+  const key = String(level);
+  // 星级取最高
+  const oldStars = entry.challengeStars[key] ?? 0;
+  entry.challengeStars[key] = Math.max(oldStars, stars);
+
+  // 最佳时间（仅当通过且更短）
+  const oldBest = entry.bestTime[key];
+  if (oldBest === undefined || elapsedSeconds < oldBest) {
+    entry.bestTime[key] = Math.round(elapsedSeconds);
+  }
+
+  // 最少碰撞
+  const oldMin = entry.minCollisions[key];
+  if (oldMin === undefined || collisions < oldMin) {
+    entry.minCollisions[key] = collisions;
+  }
+
+  progress[gameId] = entry;
+  saveProgress(progress);
+  return progress;
+}
+
+export function getChallengeStars(gameId: string): Record<string, number> {
+  const progress = loadProgress();
+  return progress[gameId]?.challengeStars ?? {};
+}
+
+export function getTotalChallengeStars(gameId: string): number {
+  const stars = getChallengeStars(gameId);
+  return Object.values(stars).reduce((sum, s) => sum + (Number(s) || 0), 0);
+}
+
+export function getChapterChallengeStars(
+  gameId: string,
+  chapterId: number,
+): { totalStars: number; completed: number } {
+  const stars = getChallengeStars(gameId);
+  let totalStars = 0;
+  let completed = 0;
+  for (let n = 1; n <= 10; n++) {
+    const id = (chapterId - 1) * 10 + n;
+    const s = stars[String(id)] ?? 0;
+    if (s > 0) completed += 1;
+    totalStars += s;
+  }
+  return { totalStars, completed };
 }

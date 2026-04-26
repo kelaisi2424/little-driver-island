@@ -10462,3 +10462,278 @@ html, body, #root {
   color: #fff;
   border-color: #1c1610;
 }
+
+/* =====================================================================
+   v1.7 挑战模式 UI
+   ===================================================================== */
+
+/* 首页：模式切换 tab（轻松练习 / 挑战闯关） */
+.game3d-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+.game3d-mode-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 10px;
+  border-radius: 16px;
+  border: 3px solid #2d1612;
+  background: linear-gradient(180deg, #fff, #f3eddf);
+  font-weight: 800;
+  color: #2d1612;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #c0bcaf;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.18s ease;
+}
+.game3d-mode-tab:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #c0bcaf;
+}
+.game3d-mode-tab .mode-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+.game3d-mode-tab .mode-name {
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+.game3d-mode-tab small {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+.game3d-mode-tab.is-active {
+  background: linear-gradient(180deg, #ffe48a, #ffc94d);
+  box-shadow: 0 4px 0 #b48716, 0 0 0 4px rgba(255, 201, 77, 0.32);
+  transform: translateY(-1px);
+}
+.game3d-mode-tab.is-active .mode-emoji {
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,0.18));
+}
+
+/* 主行动按钮 - 挑战模式特化（橙红渐变） */
+.game3d-primary-challenge {
+  background: linear-gradient(180deg, #ff7a45 0%, #e63946 100%) !important;
+  border-color: #1a0a0a !important;
+  color: #fff !important;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.25);
+  box-shadow: 0 5px 0 #7c1518 !important;
+}
+
+/* 任务卡：挑战模式 banner + objectives 列表 */
+.game3d-mission-card.is-challenge .game3d-level-pill {
+  background: linear-gradient(180deg, #ff7a45, #e63946);
+  color: #fff;
+  border-color: #1a0a0a;
+}
+.game3d-challenge-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 0 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 122, 69, 0.16), rgba(230, 57, 70, 0.18));
+  border: 2px solid rgba(230, 57, 70, 0.3);
+}
+.game3d-challenge-tag {
+  font-weight: 800;
+  font-size: 14px;
+  color: #b81921;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(230, 57, 70, 0.4);
+}
+.game3d-challenge-time {
+  font-size: 16px;
+  font-weight: 800;
+  color: #2d1612;
+}
+.game3d-challenge-objectives {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.game3d-challenge-objectives li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  font-size: 14px;
+  color: #2d1612;
+  font-weight: 700;
+}
+.game3d-objective-bullet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffd166, #ffb700);
+  color: #6b3a00;
+  font-weight: 900;
+  font-size: 14px;
+  flex-shrink: 0;
+  border: 1.5px solid #b48716;
+}
+
+/* HUD：挑战模式补充元素 */
+.game3d-hud.is-challenge {
+  border-color: rgba(255, 220, 120, 0.36) !important;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.32),
+    inset 0 1.5px 0 rgba(255, 220, 120, 0.32),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4) !important;
+}
+.game3d-hud-time-target {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.92);
+}
+.game3d-hud-time-target em {
+  font-style: normal;
+  opacity: 0.65;
+  font-size: 11px;
+}
+.game3d-hud-collisions, .game3d-hud-checkpoints {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.08);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  white-space: nowrap;
+}
+.game3d-hud-star-preview {
+  display: inline-flex;
+  gap: 2px;
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+.game3d-hud-star-preview .on {
+  color: #ffd166;
+  text-shadow: 0 0 6px rgba(255, 209, 102, 0.6);
+}
+.game3d-hud-star-preview .off {
+  color: rgba(255,255,255,0.2);
+}
+
+/* 通关页：挑战模式表现块 */
+.game3d-complete-card.is-challenge .game3d-complete-star {
+  filter: drop-shadow(0 0 16px rgba(255, 209, 102, 0.55));
+}
+.game3d-stars .star-on {
+  font-size: 1.4em;
+  filter: drop-shadow(0 0 6px rgba(255,209,102,0.6));
+}
+.game3d-stars .star-off {
+  font-size: 1.4em;
+  opacity: 0.32;
+}
+.game3d-challenge-result {
+  width: 100%;
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+}
+.game3d-challenge-result h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #b81921;
+  letter-spacing: 0.5px;
+}
+.game3d-challenge-result ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.game3d-challenge-result li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d1612;
+}
+.game3d-challenge-result li span {
+  opacity: 0.66;
+}
+.game3d-challenge-result li strong {
+  font-weight: 900;
+  color: #2d1612;
+}
+.game3d-encouragement {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 196, 88, 0.18);
+  border: 1.5px solid rgba(255, 196, 88, 0.4);
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b3a00;
+  text-align: center;
+}
+
+/* 章节选择 / 关卡选择：挑战模式徽章 */
+.lsc-mode-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff7a45, #e63946);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.lsc-node.is-challenge .lsc-stars .on {
+  color: #ffd166;
+  filter: drop-shadow(0 0 4px rgba(255,209,102,0.55));
+}
+.cs-card.is-challenge {
+  border-color: rgba(230, 57, 70, 0.45);
+}
+.cs-card-challenge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255, 209, 102, 0.18), rgba(230, 57, 70, 0.14));
+  border: 1.5px solid rgba(230, 57, 70, 0.18);
+}
+.cs-card-challenge-stars {
+  font-size: 13px;
+  font-weight: 900;
+  color: #b48716;
+}
+.cs-card-challenge-completed {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b81921;
+}
+
