@@ -5363,25 +5363,10 @@ button {
   box-shadow: none;
 }
 
-@media (orientation: portrait) {
-  .game3d-page::before {
-    content: '请把手机横过来，小司机准备出发啦！';
-    position: absolute;
-    inset: 0;
-    z-index: 100;
-    display: grid;
-    place-items: center;
-    padding: 28px;
-    text-align: center;
-    color: #ff684d;
-    font-size: 26px;
-    font-weight: 900;
-    background: linear-gradient(180deg, #8fe4ff 0%, #c4f5ff 46%, #86cf68 47%, #6bbd51 100%);
-  }
-
-  .game3d-page.debug-landscape::before {
-    display: none;
-  }
+/* v12 hotfix：彻底移除"必须横屏"覆盖层。竖屏可玩，横屏更宽。 */
+.game3d-page::before {
+  content: none !important;
+  display: none !important;
 }
 
 @media (max-height: 520px) {
@@ -9954,4 +9939,169 @@ html, body, #root {
   font-size: 13px;
   font-weight: 700;
   opacity: 0.8;
+}
+
+/* =====================================================================
+   v12 hotfix —— 竖屏适配（首页 / 游戏 / HUD / 按钮）
+   ===================================================================== */
+
+/* 默认 game3d-page 已经 fixed，竖屏照常工作 */
+
+/* 竖屏 HUD：紧凑布局，速度大字居中 */
+@media (orientation: portrait) {
+  .game3d-hud {
+    flex-wrap: wrap !important;
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    border-radius: 14px !important;
+  }
+  .game3d-hud-left, .game3d-hud-right {
+    flex: 1 1 auto;
+    gap: 6px !important;
+  }
+  .game3d-hud-center {
+    flex: 0 0 100%;
+    order: 99;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    flex-direction: row !important;
+    justify-content: center;
+    gap: 8px !important;
+  }
+  .game3d-hud strong { font-size: 28px !important; }
+  .game3d-hud em { font-size: 14px !important; }
+  .game3d-hud-center span { font-size: 12px !important; }
+  .game3d-hud button {
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 13px;
+  }
+  .game3d-hud span { font-size: 13px !important; }
+
+  /* 竖屏控制按钮：留更多底部空间 */
+  .game3d-controls {
+    padding: 0 14px !important;
+    bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 16px)) !important;
+  }
+  .game3d-control {
+    width: 70px !important;
+    height: 70px !important;
+  }
+  .game3d-control.gas {
+    width: 84px !important;
+    height: 84px !important;
+  }
+  .game3d-control span { font-size: 30px !important; }
+  .game3d-control small { font-size: 11px !important; }
+
+  /* 任务卡 / 通关卡 / 暂停卡：竖屏稍微紧凑 */
+  .game3d-mission-card,
+  .game3d-complete-card {
+    width: min(100vw - 24px, 380px) !important;
+    padding: 16px !important;
+  }
+  .game3d-mission-card h1,
+  .game3d-complete-card h1 {
+    font-size: 22px !important;
+  }
+  .game3d-overlay {
+    padding: 12px !important;
+  }
+
+  /* 首页：竖屏全宽不限 480 */
+  .game3d-home {
+    padding: max(12px, env(safe-area-inset-top, 12px)) 14px max(20px, env(safe-area-inset-bottom, 20px)) !important;
+    gap: 12px;
+  }
+  .game3d-home-top {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .game3d-home-top h1 { font-size: 20px !important; }
+  .game3d-home-top p { font-size: 12px !important; }
+  .game3d-home-top strong { font-size: 13px !important; }
+
+  /* 竖屏首页按钮改成网格 2 列，主按钮宽 100% */
+  .game3d-home-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    padding: 0 14px !important;
+  }
+  .game3d-home-actions .game3d-primary {
+    grid-column: 1 / -1;     /* 主按钮独占一行 */
+    min-height: 64px;
+    font-size: 18px;
+    white-space: nowrap;
+  }
+  .game3d-home-actions button {
+    min-height: 56px;
+    padding: 12px 8px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .game3d-chapter-strip {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 0 14px 6px !important;
+  }
+  .game3d-chapter-strip button {
+    padding: 10px 8px !important;
+    min-height: 56px;
+  }
+
+  .game3d-garage-preview {
+    min-height: 140px !important;
+    max-height: 26vh;
+  }
+
+  /* 章节选关页竖屏 */
+  .chapter-select-page, .lsc-page {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cs-card {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+  .cs-card-emoji { width: 48px !important; height: 48px !important; font-size: 26px !important; }
+  .cs-card-title { font-size: 16px !important; }
+  .cs-sticker-emoji { width: 42px !important; height: 42px !important; font-size: 22px !important; }
+
+  /* 关卡格子：竖屏 2 列 */
+  .lsc-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .lsc-node {
+    padding: 12px 8px 22px !important;
+  }
+  .lsc-num { font-size: 24px !important; }
+
+  /* 休息页：竖屏垂直布局 */
+  .rest-page.drive-rest {
+    padding: max(14px, env(safe-area-inset-top, 14px)) 16px max(20px, env(safe-area-inset-bottom, 20px)) !important;
+    gap: 12px;
+  }
+  .rest-illustration {
+    min-height: 120px !important;
+    max-height: 30vh;
+  }
+}
+
+/* 竖屏极小高度（如安卓键盘弹起）兜底 */
+@media (orientation: portrait) and (max-height: 600px) {
+  .game3d-hud-center { display: none !important; }
+  .game3d-control { width: 62px !important; height: 62px !important; }
+  .game3d-control.gas { width: 74px !important; height: 74px !important; }
+}
+
+/* 横屏极矮 (iPhone 横屏 390x844 -> 844x390) HUD 中心改为右上速度区域 */
+@media (orientation: landscape) and (max-height: 480px) {
+  .game3d-hud {
+    padding: 6px 10px !important;
+  }
+  .game3d-hud strong { font-size: 26px !important; }
+  .game3d-hud em { font-size: 12px !important; }
 }
