@@ -32,15 +32,21 @@ import ParentSettings from '../ParentSettings';
 import RestPage from '../RestPage';
 import StickerBook from '../StickerBook';
 import GameHUD from './GameHUD';
-import LevelComplete3D from './LevelComplete3D';
-import MissionCard from './MissionCard';
 import VirtualControls from './VirtualControls';
+// LevelComplete3D / MissionCard 仍保留在仓库（章节选关流程的内嵌渲染可复用），
+// 但 v1.8 默认走剧情包装的 MissionIntro / MissionComplete。
 import ChapterSelect, { type ChapterProgress } from './ChapterSelect';
 import LevelSelectChapter from './LevelSelectChapter';
 import GaragePage from './GaragePage';
+// v1.8: 剧情系统
+import StoryMap from '../story/StoryMap';
+import MissionIntro from '../story/MissionIntro';
+import MissionComplete from '../story/MissionComplete';
+import { getStoryMission, validateStoryMissions } from '../../data/storyMissions';
 
 type Game3DScreen =
-  | 'home'
+  | 'home'      // 旧首页，保留为"经典视图"，剧情模式默认走 storymap
+  | 'storymap'  // v1.8 新主入口：汽车城地图
   | 'chapters'
   | 'levels'
   | 'mission'
@@ -48,7 +54,7 @@ type Game3DScreen =
   | 'complete'
   | 'parent'
   | 'stickers'
-  | 'garage'    // v15: 车库选车页
+  | 'garage'
   | 'rest';
 
 const DEFAULT_CONFIG: ParentConfig = {
@@ -122,7 +128,8 @@ function DebugDrivingHud({ debug }: { debug: DrivingDebugState | null }) {
 
 export default function Game3DPage() {
   const [config, setConfig] = useState(() => normalizeConfig(loadConfig() ?? {}));
-  const [screen, setScreen] = useState<Game3DScreen>('home');
+  // v1.8: 默认进汽车城地图（剧情主入口）。'home' 仍可通过家长入口回退访问。
+  const [screen, setScreen] = useState<Game3DScreen>('storymap');
   const [level, setLevel] = useState<Level3D>(() => getLevel3D(getUnlocked3DLevel()));
   const [activeChapter, setActiveChapter] = useState<Chapter3D>(() => chapterOfLevel(getUnlocked3DLevel()));
   const [progressVersion, setProgressVersion] = useState(0);
@@ -185,7 +192,10 @@ export default function Game3DPage() {
   const usage = useDailyUsage(config.dailyMinutes);
 
   useEffect(() => {
-    if (import.meta.env.DEV) validateLevels();
+    if (import.meta.env.DEV) {
+      validateLevels();
+      validateStoryMissions();
+    }
   }, []);
 
   useEffect(() => {
@@ -338,8 +348,8 @@ export default function Game3DPage() {
       return;
     }
     if (pendingNextLevelId === null) {
-      // 已经是 100 关，回首页
-      setScreen('home');
+      // 已经是 100 关，回汽车城
+      setScreen('storymap');
       return;
     }
     startLevel(getLevel3D(pendingNextLevelId));
@@ -361,7 +371,7 @@ export default function Game3DPage() {
       saveSelectedMode('easy');
     }
     usage.refresh();
-    setScreen('home');
+    setScreen('storymap');
   };
 
   // v1.7: 切换模式
@@ -375,8 +385,47 @@ export default function Game3DPage() {
   const currentChapter = chapterOfLevel(unlockedLevel);
   const challengeAvailable = config.challengeEnabled !== false;
 
+  // v1.8: 当前关卡对应的剧情任务
+  const currentMission = useMemo(() => getStoryMission(level.id), [level.id]);
+  // v1.8: 章节完成数 map（地图上的勾标识用）
+  const chapterCompletionMap = useMemo<Record<number, number>>(() => {
+    const out: Record<number, number> = {};
+    for (const ch of CHAPTERS_3D) {
+      out[ch.id] = chapterProgress[ch.id]?.completed ?? 0;
+    }
+    return out;
+  }, [chapterProgress]);
+
   return (
     <main className="game3d-page">
+      {/* v1.8: 汽车城地图 - 新主入口 */}
+      {screen === 'storymap' && (
+        <StoryMap
+          unlockedLevel={unlockedLevel}
+          currentChapterId={currentChapter.id}
+          chapterCompletion={chapterCompletionMap}
+          selectedCar={selectedCar}
+          totalChallengeStars={totalChallengeStars}
+          challengeAvailable={challengeAvailable}
+          drivingMode={selectedMode}
+          dailyMinutes={config.dailyMinutes}
+          usedSeconds={usage.usage.seconds}
+          onPickActiveMission={() => startLevel(getLevel3D(unlockedLevel))}
+          onPickLocation={(chapterId) => {
+            const chapter = CHAPTERS_3D[chapterId - 1];
+            if (chapter) {
+              setActiveChapter(chapter);
+              setScreen('levels');
+            }
+          }}
+          onSwitchMode={switchMode}
+          onChapters={() => setScreen('chapters')}
+          onGarage={() => setScreen('garage')}
+          onStickers={() => setScreen('stickers')}
+          onParent={() => setScreen('parent')}
+        />
+      )}
+
       {screen === 'home' && (
         <section className="game3d-home">
           <div className="game3d-home-top">
@@ -483,7 +532,7 @@ export default function Game3DPage() {
           progress={chapterProgress}
           mode={selectedMode}
           onSelect={(ch) => { setActiveChapter(ch); setScreen('levels'); }}
-          onBack={() => setScreen('home')}
+          onBack={() => setScreen('storymap')}
         />
       )}
 
@@ -500,12 +549,13 @@ export default function Game3DPage() {
       )}
 
       {screen === 'mission' && (
-        <MissionCard
+        <MissionIntro
           level={level}
+          mission={currentMission}
           mode={selectedMode}
           challengeConfig={challengeConfig}
           onStart={enterDriving}
-          onBack={() => setScreen('home')}
+          onBack={() => setScreen('storymap')}
         />
       )}
 
@@ -537,7 +587,7 @@ export default function Game3DPage() {
             telemetry={telemetry}
             onPause={() => setPaused((value) => !value)}
             onToggleMute={toggleSound}
-            onHome={() => setScreen('home')}
+            onHome={() => setScreen('storymap')}
           />
           <div className="game3d-hint">{hint}</div>
           <VirtualControls controls={controls} setControl={setControl} />
@@ -546,7 +596,7 @@ export default function Game3DPage() {
               <section className="game3d-complete-card">
                 <h1>暂停</h1>
                 <button className="game3d-primary" onClick={() => setPaused(false)} type="button">继续驾驶</button>
-                <button onClick={() => setScreen('home')} type="button">回首页</button>
+                <button onClick={() => setScreen('storymap')} type="button">回汽车城</button>
               </section>
             </div>
           )}
@@ -557,15 +607,16 @@ export default function Game3DPage() {
         // v11 hotfix：根据 level.id 计算通关页模式
         const isFinal = level.id >= LEVELS_3D.length;
         const isChapterEnd = level.id % 10 === 0 && !isFinal;
-        const mode = isFinal ? 'final' : isChapterEnd ? 'chapter-end' : 'regular';
+        const completion = isFinal ? 'final' : isChapterEnd ? 'chapter-end' : 'regular';
         const nextChapter = isChapterEnd
           ? CHAPTERS_3D[Math.floor(level.id / 10)] ?? null  // L10 → idx 1 = ch2
           : null;
         return (
-          <LevelComplete3D
+          <MissionComplete
             level={level}
+            mission={currentMission}
             stars={lastStars}
-            mode={mode}
+            completion={completion}
             drivingMode={selectedMode}
             challengeConfig={challengeConfig}
             telemetry={telemetry}
@@ -573,30 +624,30 @@ export default function Game3DPage() {
             nextChapter={nextChapter}
             onNext={goNext}
             onRetry={() => startLevel(level)}
-            onHome={() => setScreen('home')}
+            onMap={() => setScreen('storymap')}
             onChapters={() => setScreen('chapters')}
           />
         );
       })()}
 
       {screen === 'parent' && (
-        <ParentSettings config={config} onSave={saveParentConfig} onBack={() => setScreen('home')} />
+        <ParentSettings config={config} onSave={saveParentConfig} onBack={() => setScreen('storymap')} />
       )}
-      {screen === 'stickers' && <StickerBook onBack={() => setScreen('home')} />}
+      {screen === 'stickers' && <StickerBook onBack={() => setScreen('storymap')} />}
       {screen === 'garage' && (
         <GaragePage
           unlockedLevel={unlockedLevel}
           selectedCarId={selectedCarId}
-          onBack={() => setScreen('home')}
+          onBack={() => setScreen('storymap')}
           onSelect={(id) => {
             setSelectedCarId(id);
-            setScreen('home');
+            setScreen('storymap');
           }}
         />
       )}
       {screen === 'rest' && (
         <RestPage
-          onDone={() => setScreen('home')}
+          onDone={() => setScreen('storymap')}
           onContinue={() => {
             const nextId = Math.min(LEVELS_3D.length, level.id + 1);
             startLevel(getLevel3D(nextId));
