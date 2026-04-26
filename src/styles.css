@@ -4929,6 +4929,473 @@ button {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Three.js 3D 驾驶原型                                                */
+/* ------------------------------------------------------------------ */
+
+.game3d-page {
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  color: white;
+  background: #111827;
+  position: relative;
+  touch-action: none;
+}
+
+.game3d-home {
+  width: 100%;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 12px;
+  padding: 14px 18px;
+  background:
+    radial-gradient(circle at 76% 20%, rgba(255, 225, 100, 0.95) 0 7%, transparent 8%),
+    linear-gradient(180deg, #6acfff 0%, #9ce8ff 38%, #70c36a 39%, #4b9c50 100%);
+}
+
+.game3d-home-top,
+.game3d-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: rgba(8, 16, 28, 0.72);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+}
+
+.game3d-home-top h1 {
+  margin: 0 0 2px;
+  font-size: 25px;
+  color: #fff;
+  text-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+
+.game3d-home-top p {
+  margin: 0;
+  color: rgba(255,255,255,0.78);
+  font-size: 13px;
+}
+
+.game3d-home-top strong {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 225, 96, 0.95);
+  color: #4b3410;
+}
+
+.game3d-garage-preview {
+  position: relative;
+  min-height: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0)),
+    linear-gradient(90deg, transparent 0 20%, rgba(60,68,75,0.45) 20% 80%, transparent 80%);
+  box-shadow: inset 0 0 0 4px rgba(255,255,255,0.16), 0 10px 24px rgba(0,0,0,0.16);
+}
+
+.game3d-preview-road {
+  position: absolute;
+  left: 50%;
+  bottom: -24px;
+  width: 48%;
+  height: 125%;
+  transform: translateX(-50%) perspective(360px) rotateX(52deg);
+  transform-origin: bottom;
+  border-radius: 40px 40px 0 0;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 22px, #fff2a8 22px 54px, transparent 54px 78px),
+    #4f5960;
+  box-shadow: 0 0 0 10px rgba(255,255,255,0.15);
+}
+
+.game3d-preview-car {
+  position: absolute;
+  left: 50%;
+  bottom: 54px;
+  width: 170px;
+  height: 92px;
+  transform: translateX(-50%);
+  border-radius: 26px;
+  background: #ff5148;
+  box-shadow: inset 0 -14px 0 rgba(0,0,0,0.16), 0 18px 18px rgba(0,0,0,0.24);
+  animation: game3d-car-idle 1.6s ease-in-out infinite;
+}
+
+.game3d-preview-car::before,
+.game3d-preview-car::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #171a1c;
+  border: 7px solid #dce2e5;
+}
+
+.game3d-preview-car::before { left: 28px; }
+.game3d-preview-car::after { right: 28px; }
+
+.game3d-preview-car span {
+  position: absolute;
+  left: 58px;
+  top: 16px;
+  width: 58px;
+  height: 36px;
+  border-radius: 13px;
+  background: rgba(127,216,255,0.8);
+}
+
+@keyframes game3d-car-idle {
+  50% { translate: 0 -7px; }
+}
+
+.game3d-home-actions,
+.game3d-level-strip {
+  display: flex;
+  gap: 10px;
+}
+
+.game3d-home-actions button,
+.game3d-level-strip button,
+.game3d-complete-actions button,
+.game3d-primary {
+  min-height: 56px;
+  padding: 0 18px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.76);
+  color: white;
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.24);
+}
+
+.game3d-primary {
+  min-width: 190px;
+  background: #ff7a45;
+  box-shadow: 0 7px 0 #c84d25, 0 11px 22px rgba(0,0,0,0.18);
+}
+
+.game3d-primary:disabled,
+.game3d-level-strip button:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.65);
+}
+
+.game3d-level-strip {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.game3d-level-strip button {
+  flex: 0 0 144px;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+}
+
+.game3d-level-strip small {
+  color: rgba(255,255,255,0.72);
+}
+
+.game3d-play,
+.game3d-canvas {
+  width: 100%;
+  height: 100dvh;
+}
+
+.game3d-play {
+  position: relative;
+  background: #87dfff;
+}
+
+.game3d-hud {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 12px;
+  z-index: 10;
+  min-height: 58px;
+  pointer-events: auto;
+  background: linear-gradient(180deg, rgba(6, 13, 25, 0.82), rgba(7, 18, 34, 0.68));
+  border: 1px solid rgba(255,255,255,0.13);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+.game3d-hud-left,
+.game3d-hud-center,
+.game3d-hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.game3d-hud button {
+  min-height: 42px;
+  padding: 0 13px;
+  border-radius: 14px;
+  color: white;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+  font-weight: 900;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 10px rgba(0,0,0,0.16);
+}
+
+.game3d-hud strong {
+  min-width: 76px;
+  text-align: center;
+  font-size: 34px;
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.25);
+}
+
+.game3d-hud em {
+  margin-left: -6px;
+  font-size: 16px;
+  font-style: normal;
+  color: rgba(255,255,255,0.76);
+}
+
+.game3d-hud span {
+  color: rgba(255,255,255,0.84);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.game3d-hint {
+  position: absolute;
+  left: 50%;
+  top: 78px;
+  z-index: 9;
+  transform: translateX(-50%);
+  min-width: 220px;
+  min-height: 38px;
+  padding: 9px 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: white;
+  background: rgba(8, 16, 28, 0.58);
+  backdrop-filter: blur(8px);
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+}
+
+.game3d-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 12;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 28px;
+  pointer-events: none;
+}
+
+.game3d-control-group {
+  display: flex;
+  gap: 18px;
+  pointer-events: auto;
+}
+
+.game3d-control {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0;
+  color: white;
+  background: radial-gradient(circle at 35% 25%, rgba(255,255,255,0.2), rgba(9, 17, 31, 0.7));
+  border: 3px solid rgba(255,255,255,0.22);
+  box-shadow:
+    0 12px 24px rgba(0,0,0,0.26),
+    inset 0 4px 8px rgba(255,255,255,0.12),
+    inset 0 -8px 12px rgba(0,0,0,0.22);
+  backdrop-filter: blur(8px);
+  touch-action: none;
+  transition: transform 0.08s ease, filter 0.08s ease;
+}
+
+.game3d-control span {
+  font-size: 36px;
+  line-height: 1;
+  text-shadow: 0 3px 8px rgba(0,0,0,0.26);
+}
+
+.game3d-control small {
+  font-size: 12px;
+  color: rgba(255,255,255,0.82);
+}
+
+.game3d-control.gas {
+  width: 106px;
+  height: 106px;
+  background: radial-gradient(circle at 35% 25%, rgba(255,255,255,0.26), rgba(34, 188, 99, 0.82));
+  border-color: rgba(199, 255, 218, 0.42);
+}
+
+.game3d-control.brake {
+  background: radial-gradient(circle at 35% 25%, rgba(255,255,255,0.24), rgba(224, 55, 55, 0.82));
+  border-color: rgba(255, 205, 205, 0.4);
+}
+
+.game3d-control.pressed {
+  transform: scale(0.9) translateY(4px);
+  filter: brightness(1.24);
+}
+
+.game3d-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 8, 23, 0.55);
+}
+
+.game3d-mission-card,
+.game3d-complete-card {
+  width: min(560px, 88vw);
+  padding: 22px;
+  border-radius: 24px;
+  text-align: center;
+  color: white;
+  background: rgba(10, 20, 36, 0.9);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.game3d-level-pill {
+  display: inline-flex;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: rgba(255, 225, 96, 0.94);
+  color: #4b3410;
+  font-weight: 900;
+}
+
+.game3d-mission-card h1,
+.game3d-complete-card h1 {
+  margin: 10px 0 8px;
+  font-size: 32px;
+}
+
+.game3d-mission-card p,
+.game3d-complete-card p {
+  color: rgba(255,255,255,0.82);
+  font-size: 17px;
+}
+
+.game3d-mini-road {
+  position: relative;
+  height: 74px;
+  margin: 14px 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #4f5960;
+}
+
+.game3d-mini-road::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 5px;
+  background: repeating-linear-gradient(90deg, #fff2a8 0 26px, transparent 26px 48px);
+}
+
+.game3d-mini-car,
+.game3d-mini-flag {
+  position: absolute;
+  top: 10px;
+  font-size: 42px;
+}
+
+.game3d-mini-car { left: 54px; }
+.game3d-mini-flag { right: 62px; }
+
+.game3d-link {
+  min-height: 44px;
+  margin-top: 6px;
+  color: rgba(255,255,255,0.78);
+  background: transparent;
+  font-size: 15px;
+}
+
+.game3d-complete-star {
+  font-size: 62px;
+  animation: checkpoint-pop 0.9s ease-out infinite;
+}
+
+.game3d-stars {
+  font-size: 34px;
+  margin: 4px 0;
+}
+
+.game3d-complete-actions {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.game3d-complete-actions button:not(.game3d-primary) {
+  background: rgba(255,255,255,0.16);
+  box-shadow: none;
+}
+
+@media (orientation: portrait) {
+  .game3d-page::before {
+    content: '请把手机横过来，小司机准备出发啦！';
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    text-align: center;
+    color: #ff684d;
+    font-size: 26px;
+    font-weight: 900;
+    background: linear-gradient(180deg, #8fe4ff 0%, #c4f5ff 46%, #86cf68 47%, #6bbd51 100%);
+  }
+
+  .game3d-page.debug-landscape::before {
+    display: none;
+  }
+}
+
+@media (max-height: 520px) {
+  .game3d-control {
+    width: 72px;
+    height: 72px;
+  }
+
+  .game3d-control.gas {
+    width: 86px;
+    height: 86px;
+  }
+
+  .game3d-controls {
+    bottom: 10px;
+  }
+
+  .game3d-hud {
+    top: 7px;
+  }
+}
+
 /* ====================================================================
    v3 重构 —— 竖屏小游戏视觉
    覆盖旧的横屏强制规则；新增 HomePage / DrivingLevel / LevelComplete /
@@ -8388,5 +8855,437 @@ button {
   .sb-title { font-size: 20px; }
 }
 
+/* =====================================================================
+   v7 真 3D 驾驶模式 UI（覆盖全屏 Canvas + HUD + 虚拟方向键）
+   ===================================================================== */
 
+.g3d-page {
+  position: fixed;
+  inset: 0;
+  background: #bfe3ff;
+  overflow: hidden;
+  z-index: 100;
+}
 
+/* Three.js Canvas 容器（继承自 R3F 的 canvas） */
+.g3d-page canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* HUD 容器，悬浮在 Canvas 上 */
+.g3d-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  padding: env(safe-area-inset-top, 12px) env(safe-area-inset-right, 14px) 14px env(safe-area-inset-left, 14px);
+}
+.g3d-hud-tl, .g3d-hud-tr {
+  position: absolute;
+  top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  pointer-events: auto;
+}
+.g3d-hud-tl { left: 12px; }
+.g3d-hud-tr { right: 12px; flex-direction: row-reverse; }
+.g3d-hud-top {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.g3d-hud-btn {
+  width: 42px;
+  height: 42px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.g3d-hud-btn:active { transform: scale(0.92); }
+
+.g3d-hud-pill {
+  display: flex;
+  flex-direction: column;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 14px;
+  padding: 5px 12px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+.g3d-hud-label {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.g3d-hud-sub {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.g3d-time-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 14px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 900;
+  font-family: monospace;
+  backdrop-filter: blur(6px);
+}
+
+.g3d-speed {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 16px;
+  padding: 6px 18px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.g3d-speed-num {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  font-family: monospace;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.5);
+}
+.g3d-speed-unit {
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.g3d-checkpoints {
+  background: rgba(74, 159, 240, 0.85);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+
+/* 虚拟按键 */
+.vc-cluster {
+  position: absolute;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  gap: 14px;
+  pointer-events: auto;
+  z-index: 6;
+}
+.vc-left { left: 18px; }
+.vc-right { right: 18px; flex-direction: row-reverse; }
+
+.vc-btn {
+  width: 78px; height: 78px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.5);
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.25) 0%, rgba(0,0,0,0.5) 60%);
+  color: #fff;
+  font-size: 32px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: transform 0.06s, box-shadow 0.06s;
+  box-shadow:
+    0 6px 12px rgba(0,0,0,0.45),
+    inset 0 -4px 8px rgba(0,0,0,0.4),
+    inset 0 4px 8px rgba(255,255,255,0.18);
+  backdrop-filter: blur(6px);
+}
+.vc-btn:active {
+  transform: scale(0.92);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.35),
+    inset 0 4px 8px rgba(0,0,0,0.5);
+}
+.vc-throttle {
+  background: radial-gradient(circle at 30% 25%, #80f29a 0%, #2c8044 70%);
+  border-color: rgba(255,255,255,0.6);
+  font-size: 26px;
+}
+.vc-brake {
+  background: radial-gradient(circle at 30% 25%, #ffa07f 0%, #c93817 70%);
+  border-color: rgba(255,255,255,0.6);
+  font-size: 26px;
+}
+
+/* MissionCard */
+.mc-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+.mc-card {
+  background: #fff;
+  border: 4px solid #2d1612;
+  border-radius: 24px;
+  padding: 26px 22px 20px;
+  width: 88%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.4);
+}
+.mc-num {
+  font-size: 13px;
+  font-weight: 800;
+  color: #6c5e54;
+  letter-spacing: 1px;
+}
+.mc-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #ff5e3a;
+  margin: 4px 0 6px;
+  text-shadow: 1px 1px 0 #fff;
+}
+.mc-mission {
+  font-size: 16px;
+  color: #2d1612;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+.mc-help {
+  background: #f4faff;
+  border: 2px solid #cce8ff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+.mc-help-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #2d1612;
+  font-weight: 700;
+  padding: 4px 0;
+}
+.mc-key {
+  display: inline-block;
+  min-width: 38px;
+  background: #2d1612;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 900;
+  text-align: center;
+  font-size: 14px;
+}
+.mc-actions { display: flex; flex-direction: column; gap: 8px; }
+.mc-primary {
+  width: 100%;
+  min-height: 60px;
+  border: 3px solid #7d2118;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ff8357, #ff4e2f);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  font-family: inherit;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 6px 0 #9e2a18;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+.mc-primary:active { transform: translateY(4px); box-shadow: 0 2px 0 #9e2a18; }
+.mc-ghost {
+  width: 100%;
+  min-height: 50px;
+  border: 3px solid #c0bcaf;
+  border-radius: 18px;
+  background: #f3eddf;
+  color: #5a4a3a;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #c0bcaf;
+}
+.mc-ghost:active { transform: translateY(2px); box-shadow: 0 2px 0 #c0bcaf; }
+
+/* 暂停面板 */
+.g3d-pause {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.55);
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+.g3d-pause-card {
+  background: #fff;
+  border: 4px solid #2d1612;
+  border-radius: 24px;
+  padding: 24px;
+  width: 80%;
+  max-width: 320px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.g3d-pause-card h2 {
+  font-size: 24px;
+  color: #ff5e3a;
+  margin: 0 0 8px;
+}
+
+/* 通关 3D */
+.lc3d-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.55);
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+.lc3d-card {
+  background: #fff;
+  border: 4px solid #2d1612;
+  border-radius: 26px;
+  padding: 28px 22px 22px;
+  width: 88%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+  animation: ui-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lc3d-burst {
+  font-size: 64px;
+  animation: ui-bob 0.8s ease-in-out infinite;
+  display: inline-block;
+}
+.lc3d-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #ff5e3a;
+  margin: 4px 0 4px;
+  text-shadow: 1px 1px 0 #fff;
+}
+.lc3d-subtitle {
+  font-size: 16px;
+  color: #6c5e54;
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+.lc3d-stars {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 48px;
+  margin: 10px 0;
+}
+.lc3d-stars .on { filter: drop-shadow(0 0 12px #ffd000); }
+.lc3d-stars .off { opacity: 0.25; filter: grayscale(1); }
+.lc3d-learn {
+  background: #f4faff;
+  border: 2px solid #cce8ff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin: 10px 0 14px;
+}
+.lc3d-learn-label {
+  font-size: 12px;
+  color: #4a9ff0;
+  font-weight: 800;
+}
+.lc3d-learn p {
+  font-size: 16px;
+  color: #2d1612;
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+.lc3d-actions { display: flex; flex-direction: column; gap: 8px; }
+.lc3d-primary {
+  width: 100%;
+  min-height: 60px;
+  border: 3px solid #7d2118;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ff8357, #ff4e2f);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  font-family: inherit;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 6px 0 #9e2a18;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+.lc3d-primary:active { transform: translateY(4px); box-shadow: 0 2px 0 #9e2a18; }
+.lc3d-secondary-row { display: flex; gap: 8px; }
+.lc3d-secondary {
+  flex: 1;
+  min-height: 46px;
+  border: 3px solid #c0bcaf;
+  border-radius: 16px;
+  background: #fff7e0;
+  color: #5a3500;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #d9b860;
+}
+.lc3d-secondary.ghost {
+  background: #f3eddf;
+  color: #5a4a3a;
+  box-shadow: 0 4px 0 #c0bcaf;
+}
+.lc3d-secondary:active { transform: translateY(2px); box-shadow: 0 2px 0 #d9b860; }
+.lc3d-secondary.ghost:active { box-shadow: 0 2px 0 #c0bcaf; }
+
+/* 小屏适配 */
+@media (max-width: 420px) {
+  .vc-btn { width: 68px; height: 68px; font-size: 26px; }
+  .g3d-speed-num { font-size: 28px; }
+  .mc-card { padding: 20px 16px 16px; }
+  .mc-title { font-size: 22px; }
+  .mc-mission { font-size: 15px; }
+}

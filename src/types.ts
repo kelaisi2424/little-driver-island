@@ -5,6 +5,7 @@ export type Screen =
   | 'home'
   | 'level-select'
   | 'play'
+  | 'play3d'        // 3D 驾驶模式（v7 新增）
   | 'complete'
   | 'rest'
   | 'parent'

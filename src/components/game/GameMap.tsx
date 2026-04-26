@@ -4,7 +4,7 @@ import TaskHotspot, { type HotspotDef } from './TaskHotspot';
 import StarBurst from './StarBurst';
 
 interface GameMapProps {
-  mapRef: React.RefObject<HTMLDivElement>;
+  mapRef: React.RefObject<HTMLDivElement | null>;
   hotspots: HotspotDef[];
   activeTypes: Set<string>;
   completedTypes: Set<string>;

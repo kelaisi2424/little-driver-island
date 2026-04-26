@@ -13,7 +13,7 @@ interface UseCarDragOptions {
 }
 
 export function useCarDrag(
-  mapRef: RefObject<HTMLElement>,
+  mapRef: RefObject<HTMLElement | null>,
   { carWidth, carHeight, initial }: UseCarDragOptions,
 ) {
   const [position, setPosition] = useState<Point>(initial);
