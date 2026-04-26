@@ -141,10 +141,21 @@ function SceneContent({
     }
 
     const speedFactor = THREE.MathUtils.clamp(state.speed / 19.5, 0, 1);
+    // v12 hotfix：竖屏时镜头拉远 + 抬高 + FOV 更广，让前方道路看得清
+    const isPortrait = window.innerHeight > window.innerWidth;
+    if (camera instanceof THREE.PerspectiveCamera) {
+      const targetFov = isPortrait ? 70 : 60;
+      if (Math.abs(camera.fov - targetFov) > 0.5) {
+        camera.fov = targetFov;
+        camera.updateProjectionMatrix();
+      }
+    }
     // 刹车时镜头靠近 + 平视；油门时镜头拉远 + 看更远
     const brakeZoom = controls.brake ? -1.4 : 0;
-    const followDistance = 6.4 + speedFactor * 3.6 + brakeZoom;
-    const cameraHeight = 2.95 + speedFactor * 0.85;
+    const baseFollow = isPortrait ? 8.4 : 6.4;
+    const baseHeight = isPortrait ? 4.2 : 2.95;
+    const followDistance = baseFollow + speedFactor * 3.6 + brakeZoom;
+    const cameraHeight = baseHeight + speedFactor * 0.85;
     const sideLean = -state.steering * speedFactor * 0.55;
     const desiredCamera = new THREE.Vector3(
       state.position.x + Math.sin(state.rotationY) * followDistance + Math.cos(state.rotationY) * sideLean,
