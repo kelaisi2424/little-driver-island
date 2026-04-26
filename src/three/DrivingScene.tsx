@@ -163,14 +163,14 @@ function SceneContent({
 
     const activeControlsForCamera = controlsRef.current;
     const speedFactor = THREE.MathUtils.clamp(state.speed / 19.5, 0, 1);
-    // v12 hotfix：竖屏时镜头拉远 + 抬高 + FOV 更广，让前方道路看得清
+    // v14 画质：竖/横屏切 FOV + 速度感 FOV 微变化（max 速度时 +3°）
     const isPortrait = window.innerHeight > window.innerWidth;
     if (camera instanceof THREE.PerspectiveCamera) {
-      const targetFov = isPortrait ? 70 : 60;
-      if (Math.abs(camera.fov - targetFov) > 0.5) {
-        camera.fov = targetFov;
-        camera.updateProjectionMatrix();
-      }
+      const baseFov = isPortrait ? 70 : 60;
+      const targetFov = baseFov + speedFactor * 3.5; // 速度越快越广角，制造速度感
+      // 平滑过渡而不是阶跃，避免观感突变
+      camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08);
+      camera.updateProjectionMatrix();
     }
     // 刹车时镜头靠近 + 平视；油门时镜头拉远 + 看更远
     const brakeZoom = activeControlsForCamera.brake ? -1.4 : 0;
@@ -179,9 +179,13 @@ function SceneContent({
     const followDistance = baseFollow + speedFactor * 3.6 + brakeZoom;
     const cameraHeight = baseHeight + speedFactor * 0.85;
     const sideLean = -state.steering * speedFactor * 0.55;
+    // v14 画质：撞锥时摄像机轻微震动（用 state.shakeTime 同步）
+    const shakeAmt = state.shakeTime > 0
+      ? Math.sin(Date.now() * 0.04) * 0.12 * (state.shakeTime / 0.42)
+      : 0;
     const desiredCamera = new THREE.Vector3(
-      state.position.x + Math.sin(state.rotationY) * followDistance + Math.cos(state.rotationY) * sideLean,
-      state.position.y + cameraHeight,
+      state.position.x + Math.sin(state.rotationY) * followDistance + Math.cos(state.rotationY) * sideLean + shakeAmt,
+      state.position.y + cameraHeight + shakeAmt * 0.4,
       state.position.z + Math.cos(state.rotationY) * followDistance - Math.sin(state.rotationY) * sideLean,
     );
     camera.position.lerp(desiredCamera, 0.085);
