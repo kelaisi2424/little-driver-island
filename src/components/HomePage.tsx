@@ -1,8 +1,10 @@
-// 首页：主视觉 + 闯关主入口 + 4 个小入口。设计目标——5 岁小朋友一眼想点"开始闯关"。
+// 首页 v4：用 CartoonCar + GameButton 重做。
 
 import { useEffect, useRef } from 'react';
 import { primeVoice, speak } from '../utils/speech';
-import MainHeroCar from './MainHeroCar';
+import CartoonCar from './ui/CartoonCar';
+import Clouds from './ui/Clouds';
+import GameButton from './ui/GameButton';
 
 interface HomePageProps {
   nextLevelId: number;
@@ -63,7 +65,6 @@ export default function HomePage({
 
   return (
     <main className="home-page">
-      {/* 顶部状态条 */}
       <header className="home-topbar">
         <div className="home-title">
           <span className="home-icon" aria-hidden>🚗</span>
@@ -81,15 +82,21 @@ export default function HomePage({
         </div>
       </header>
 
-      {/* 主视觉舞台 */}
       <section className="home-stage" aria-hidden>
         <span className="home-sun">☀️</span>
-        <span className="home-cloud cloud-1" />
-        <span className="home-cloud cloud-2" />
-        <span className="home-cloud cloud-3" />
+        <Clouds variant="sky" />
 
         <div className="home-mountain m1" />
         <div className="home-mountain m2" />
+
+        {/* 幼儿园小房子（左侧装饰） */}
+        <div className="home-kindergarten">
+          <div className="roof" />
+          <div className="body" />
+        </div>
+
+        {/* P 牌（左下） */}
+        <div className="home-park-sign">P</div>
 
         <div className="home-deco-light">
           <div className="hd-pole" />
@@ -103,33 +110,29 @@ export default function HomePage({
         <div className="home-deco-tree tree-r">🌲</div>
         <div className="home-deco-cone cone-l">
           <svg viewBox="0 0 40 50" width="32" height="40">
-            <path d="M 12 44 L 28 44 L 24 12 L 16 12 Z" fill="#ff7b3a" />
+            <path d="M 12 44 L 28 44 L 24 12 L 16 12 Z" fill="#ff7b3a" stroke="#3a1010" strokeWidth="1.5" />
             <rect x="12" y="42" width="16" height="4" rx="1" fill="#3a3a3a" />
             <rect x="14" y="26" width="12" height="3" fill="#fff" />
           </svg>
         </div>
         <div className="home-deco-cone cone-r">
           <svg viewBox="0 0 40 50" width="32" height="40">
-            <path d="M 12 44 L 28 44 L 24 12 L 16 12 Z" fill="#ff7b3a" />
+            <path d="M 12 44 L 28 44 L 24 12 L 16 12 Z" fill="#ff7b3a" stroke="#3a1010" strokeWidth="1.5" />
             <rect x="12" y="42" width="16" height="4" rx="1" fill="#3a3a3a" />
             <rect x="14" y="26" width="12" height="3" fill="#fff" />
           </svg>
         </div>
 
-        <div className="home-grass" />
+        <div className="home-runway" />
 
-        <div className="home-runway">
-          <div className="home-runway-stripe" />
-        </div>
-
-        <MainHeroCar />
+        {/* 主车 */}
+        <CartoonCar className="hero" />
 
         <div className="home-start-flag">
           <span>START</span>
         </div>
       </section>
 
-      {/* 主按钮 + 4 个小按钮 */}
       <section className="home-actions">
         {limitReached ? (
           <div className="home-limit-card">
@@ -140,37 +143,39 @@ export default function HomePage({
             </div>
           </div>
         ) : (
-          <button className="home-main-btn" onClick={handleStart} type="button">
-            <span className="btn-emoji" aria-hidden>🚀</span>
-            <span className="btn-main">开始闯关</span>
-            <span className="btn-sub">第 {Math.min(nextLevelId, totalLevels)} 关</span>
-          </button>
+          <GameButton
+            variant="primary"
+            size="lg"
+            emoji="🚗"
+            pulse
+            badge={`第 ${Math.min(nextLevelId, totalLevels)} 关`}
+            onClick={handleStart}
+          >
+            开始闯关
+          </GameButton>
         )}
 
         <div className="home-mini-btns">
-          <button className="mini-btn" onClick={onLevels} type="button">
-            <span className="emoji" aria-hidden>🗺️</span>
-            <span>选关</span>
-          </button>
-          <button className="mini-btn" onClick={onStickers} type="button">
-            <span className="emoji" aria-hidden>🎨</span>
-            <span>贴纸册</span>
-          </button>
-          <button className="mini-btn" onClick={onMinigames} type="button">
-            <span className="emoji" aria-hidden>🎮</span>
-            <span>小游戏</span>
-          </button>
-          <button
-            className="mini-btn parent-btn"
+          <GameButton variant="blue" size="sm" emoji="🗺️" onClick={onLevels}>
+            选关
+          </GameButton>
+          <GameButton variant="yellow" size="sm" emoji="🎨" onClick={onStickers}>
+            贴纸册
+          </GameButton>
+          <GameButton variant="green" size="sm" emoji="🎮" onClick={onMinigames}>
+            小游戏
+          </GameButton>
+          <GameButton
+            variant="ghost"
+            size="sm"
+            emoji="👨‍👩‍👧"
             onPointerDown={beginParentPress}
             onPointerUp={cancelParentPress}
             onPointerCancel={cancelParentPress}
             onPointerLeave={cancelParentPress}
-            type="button"
           >
-            <span className="emoji" aria-hidden>👨‍👩‍👧</span>
-            <span>家长（长按）</span>
-          </button>
+            家长长按
+          </GameButton>
         </div>
       </section>
     </main>
