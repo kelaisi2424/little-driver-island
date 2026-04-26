@@ -138,11 +138,50 @@ export function resetDailyUsage(): void {
   safeSet(KEY_USAGE, JSON.stringify({ date: todayString(), seconds: 0, completedLevels: 0 }));
 }
 
+const DRIVING3D_MAX_LEVEL = 100;
+
+function repairGameProgress(progress: GameProgress): { progress: GameProgress; changed: boolean } {
+  let changed = false;
+  const entry = progress.driving3d;
+  if (!entry) return { progress, changed };
+
+  if (!entry.stars || typeof entry.stars !== 'object') {
+    entry.stars = {};
+    changed = true;
+  }
+
+  const completedLevels = Object.entries(entry.stars)
+    .filter(([, stars]) => Number(stars) > 0)
+    .map(([id]) => Number(id))
+    .filter((id) => Number.isInteger(id) && id >= 1 && id <= DRIVING3D_MAX_LEVEL);
+  const maxCompleted = completedLevels.length > 0 ? Math.max(...completedLevels) : 0;
+  const expectedCurrent = Math.min(DRIVING3D_MAX_LEVEL, maxCompleted + 1);
+
+  if (!Number.isInteger(entry.currentLevel) || entry.currentLevel < 1) {
+    entry.currentLevel = 1;
+    changed = true;
+  }
+  if (expectedCurrent > entry.currentLevel) {
+    entry.currentLevel = expectedCurrent;
+    changed = true;
+  }
+  if (entry.currentLevel > DRIVING3D_MAX_LEVEL) {
+    entry.currentLevel = DRIVING3D_MAX_LEVEL;
+    changed = true;
+  }
+
+  progress.driving3d = entry;
+  return { progress, changed };
+}
+
 export function loadProgress(): GameProgress {
   const raw = safeGet(KEY_PROGRESS);
   if (!raw) return {};
   try {
-    return JSON.parse(raw) as GameProgress;
+    const parsed = JSON.parse(raw) as GameProgress;
+    const repaired = repairGameProgress(parsed);
+    if (repaired.changed) saveProgress(repaired.progress);
+    return repaired.progress;
   } catch {
     return {};
   }

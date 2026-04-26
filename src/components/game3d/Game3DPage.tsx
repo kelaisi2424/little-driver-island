@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { LEVELS_3D, getLevel3D, type Level3D } from '../../data/levels3d';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LEVELS_3D, getLevel3D, validateLevels, type Level3D } from '../../data/levels3d';
 import { CHAPTERS_3D, chapterOfLevel, isChapterEndLevel, type Chapter3D } from '../../data/chapters3d';
 import { useDailyUsage } from '../../hooks/useDailyUsage';
 import type { ParentConfig } from '../../types';
@@ -13,7 +13,7 @@ import {
   updateLevelProgress,
 } from '../../utils/storage';
 import { awardSticker } from '../../utils/stickers';
-import DrivingScene from '../../three/DrivingScene';
+import DrivingScene, { type DrivingDebugState } from '../../three/DrivingScene';
 import { useDrivingControls } from '../../three/useDrivingControls';
 import ParentSettings from '../ParentSettings';
 import RestPage from '../RestPage';
@@ -75,6 +75,26 @@ function buildChapterProgress(starsByLevel: Record<string, number>): Record<numb
   return out;
 }
 
+function getNextLevelId(levelId: number): number | null {
+  return levelId >= LEVELS_3D.length ? null : levelId + 1;
+}
+
+function DebugDrivingHud({ debug }: { debug: DrivingDebugState | null }) {
+  if (!import.meta.env.DEV || !debug) return null;
+  return (
+    <div className="game3d-debug-hud">
+      <span>acc:{String(debug.accelerate)}</span>
+      <span>brake:{String(debug.brake)}</span>
+      <span>left:{String(debug.left)}</span>
+      <span>right:{String(debug.right)}</span>
+      <span>speed:{debug.speed}</span>
+      <span>z:{debug.positionZ}</span>
+      <span>off:{String(debug.offRoad)}</span>
+      <span>hit:{String(debug.collision)}</span>
+    </div>
+  );
+}
+
 export default function Game3DPage() {
   const [config, setConfig] = useState(() => normalizeConfig(loadConfig() ?? {}));
   const [screen, setScreen] = useState<Game3DScreen>('home');
@@ -86,23 +106,33 @@ export default function Game3DPage() {
   const [checkpointPassed, setCheckpointPassed] = useState(0);
   const [hint, setHintRaw] = useState('准备发车');
   const lastSpokenRef = useRef<{ text: string; t: number }>({ text: '', t: 0 });
-  // 防止同一句话短时间反复朗读
-  const setHint = (text: string) => {
+  // v14 关键修复：setHint 必须 useCallback 包装，否则每次 Game3DPage 渲染都会
+  // 创建新函数 → 作为 DrivingScene 的 onHint prop 变化 → DrivingScene 的
+  // useEffect [level, ..., onHint, ...] 重跑 → resetDrivingState 把车的速度
+  // 和位置重置 → 油门按了车不动！
+  const setHint = useCallback((text: string) => {
     setHintRaw(text);
     const now = Date.now();
     if (text && text !== lastSpokenRef.current.text && now - lastSpokenRef.current.t > 1500) {
       lastSpokenRef.current = { text, t: now };
       speak(text);
     }
-  };
+  }, []);
   const [muted, setMuted] = useState(getMuted);
   const [paused, setPaused] = useState(false);
   const [lastStars, setLastStars] = useState(3);
   const [sessionLevels, setSessionLevels] = useState(0);
   const [startedAt, setStartedAt] = useState(Date.now());
   const [chapterStickerJustUnlocked, setChapterStickerJustUnlocked] = useState<string | null>(null);
-  const { controls, setControl, resetControls } = useDrivingControls();
+  const [pendingNextLevelId, setPendingNextLevelId] = useState<number | null>(null);
+  const [shouldRestBeforeNext, setShouldRestBeforeNext] = useState(false);
+  const [drivingDebug, setDrivingDebug] = useState<DrivingDebugState | null>(null);
+  const { controls, controlsRef, setControl, resetControls } = useDrivingControls();
   const usage = useDailyUsage(config.dailyMinutes);
+
+  useEffect(() => {
+    if (import.meta.env.DEV) validateLevels();
+  }, []);
 
   useEffect(() => {
     saveConfig(config);
@@ -162,13 +192,17 @@ export default function Game3DPage() {
     setLastStars(stars);
     usage.addUsage(playSeconds);
     updateLevelProgress('driving3d', level.id, stars);
+    const nextLevelId = getNextLevelId(level.id);
+    const nextSessionLevels = sessionLevels + 1;
+    setPendingNextLevelId(nextLevelId);
+    setShouldRestBeforeNext(nextLevelId !== null && nextSessionLevels >= config.restAfterLevels);
     addLearningRecord({
       gameId: 'driving3d',
       level: level.id,
       learningGoal: level.learningGoal,
       summary: level.summary,
     });
-    setSessionLevels((value) => value + 1);
+    setSessionLevels(nextSessionLevels);
     setProgressVersion((value) => value + 1);
 
     // 章节末关：颁发章节贴纸
@@ -188,18 +222,18 @@ export default function Game3DPage() {
   };
 
   const goNext = () => {
-    if (sessionLevels >= config.restAfterLevels) {
+    if (shouldRestBeforeNext) {
       setSessionLevels(0);
+      setShouldRestBeforeNext(false);
       setScreen('rest');
       return;
     }
-    const nextId = Math.min(LEVELS_3D.length, level.id + 1);
-    if (nextId === level.id) {
+    if (pendingNextLevelId === null) {
       // 已经是 100 关，回首页
       setScreen('home');
       return;
     }
-    startLevel(getLevel3D(nextId));
+    startLevel(getLevel3D(pendingNextLevelId));
   };
 
   const toggleSound = () => {
@@ -312,12 +346,15 @@ export default function Game3DPage() {
           <DrivingScene
             level={level}
             controls={controls}
+            controlsRef={controlsRef}
             paused={paused}
             onSpeedChange={setSpeed}
             onCheckpointChange={setCheckpointPassed}
             onHint={setHint}
             onComplete={completeLevel}
+            onDebugChange={import.meta.env.DEV ? setDrivingDebug : undefined}
           />
+          {import.meta.env.DEV && <DebugDrivingHud debug={drivingDebug} />}
           <GameHUD
             level={level}
             speed={speed}

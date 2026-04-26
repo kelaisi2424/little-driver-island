@@ -18,23 +18,32 @@ const buttonGroups: Array<Array<{ key: DrivingControlKey; icon: string; label: s
 ];
 
 export default function VirtualControls({ controls, setControl }: VirtualControlsProps) {
-  // v12 hotfix：iOS Safari 在 setPointerCapture 后仍会因为手指轻微移动出按钮边缘
-  // 触发 pointerleave，导致油门一按就松。
-  // 解决：去掉 pointerleave 释放，只在 pointerup / pointercancel / lostpointercapture 释放。
-  // 同时手指即使滑出按钮，因为已 capture，pointer events 仍发到这个按钮，
-  // 真正抬手时才会 pointerup，对孩子持续按住油门更友好。
   const bind = (key: DrivingControlKey) => ({
     onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
       event.preventDefault();
-      try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* 忽略 */ }
+      event.stopPropagation();
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Some mobile browsers can reject capture after interrupted touches.
+      }
       setControl(key, true);
     },
     onPointerUp: (event: React.PointerEvent<HTMLButtonElement>) => {
       event.preventDefault();
+      event.stopPropagation();
       setControl(key, false);
     },
-    onPointerCancel: () => setControl(key, false),
-    onLostPointerCapture: () => setControl(key, false),
+    onPointerCancel: (event: React.PointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setControl(key, false);
+    },
+    onPointerLeave: (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (event.pointerType === 'mouse') {
+        setControl(key, false);
+      }
+    },
     onContextMenu: (event: React.MouseEvent) => event.preventDefault(),
   });
 

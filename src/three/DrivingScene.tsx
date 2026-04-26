@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Sky } from '@react-three/drei';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import type { Level3D } from '../data/levels3d';
 import { playSound } from '../utils/sound';
@@ -22,11 +22,24 @@ import {
 interface DrivingSceneProps {
   level: Level3D;
   controls: DrivingControls;
+  controlsRef: RefObject<DrivingControls>;
   paused: boolean;
   onSpeedChange: (speed: number) => void;
   onCheckpointChange: (passed: number) => void;
   onHint: (message: string) => void;
   onComplete: (stars: number, elapsedSeconds: number) => void;
+  onDebugChange?: (debug: DrivingDebugState) => void;
+}
+
+export interface DrivingDebugState {
+  accelerate: boolean;
+  brake: boolean;
+  left: boolean;
+  right: boolean;
+  speed: number;
+  positionZ: number;
+  offRoad: boolean;
+  collision: boolean;
 }
 
 function TrafficLight({ z }: { z: number }) {
@@ -55,11 +68,13 @@ function TrafficLight({ z }: { z: number }) {
 function SceneContent({
   level,
   controls,
+  controlsRef,
   paused,
   onSpeedChange,
   onCheckpointChange,
   onHint,
   onComplete,
+  onDebugChange,
 }: DrivingSceneProps) {
   const groupRef = useRef<THREE.Group | null>(null);
   const stateRef = useRef(createDrivingState());
@@ -69,6 +84,8 @@ function SceneContent({
   const lastHitRef = useRef(0);
   const lastOffRoadHintRef = useRef(0);
   const smoothSpeedRef = useRef(0);
+  const lastDebugRef = useRef(0);
+  const lastCollisionRef = useRef(false);
   const { camera } = useThree();
   const conePositions = useMemo(
     () => level.cones.map((cone) => new THREE.Vector3(cone.x, 0.45, cone.z)),
@@ -91,16 +108,20 @@ function SceneContent({
     const state = stateRef.current;
 
     if (!paused && !completedRef.current) {
-      const { offRoad } = updateDrivingPhysics(state, controls, delta);
+      const activeControls = controlsRef.current;
+      const { offRoad } = updateDrivingPhysics(state, activeControls, delta);
       const now = Date.now();
+      let collision = false;
       for (const cone of conePositions) {
         if (state.position.distanceTo(cone) < 1.05 && now - lastHitRef.current > 850) {
+          collision = true;
           bumpDrivingState(state);
           lastHitRef.current = now;
           onHint('慢一点，注意安全。');
           playSound('fail');
         }
       }
+      lastCollisionRef.current = collision;
 
       if (offRoad && now - lastOffRoadHintRef.current > 1400) {
         lastOffRoadHintRef.current = now;
@@ -140,6 +161,7 @@ function SceneContent({
       groupRef.current.rotation.y = state.rotationY;
     }
 
+    const activeControlsForCamera = controlsRef.current;
     const speedFactor = THREE.MathUtils.clamp(state.speed / 19.5, 0, 1);
     // v12 hotfix：竖屏时镜头拉远 + 抬高 + FOV 更广，让前方道路看得清
     const isPortrait = window.innerHeight > window.innerWidth;
@@ -151,7 +173,7 @@ function SceneContent({
       }
     }
     // 刹车时镜头靠近 + 平视；油门时镜头拉远 + 看更远
-    const brakeZoom = controls.brake ? -1.4 : 0;
+    const brakeZoom = activeControlsForCamera.brake ? -1.4 : 0;
     const baseFollow = isPortrait ? 8.4 : 6.4;
     const baseHeight = isPortrait ? 4.2 : 2.95;
     const followDistance = baseFollow + speedFactor * 3.6 + brakeZoom;
@@ -171,6 +193,20 @@ function SceneContent({
     camera.lookAt(lookAhead);
     smoothSpeedRef.current = THREE.MathUtils.lerp(smoothSpeedRef.current, kmh(state.speed), 0.16);
     onSpeedChange(Math.round(smoothSpeedRef.current));
+    const debugNow = performance.now();
+    if (onDebugChange && debugNow - lastDebugRef.current > 180) {
+      lastDebugRef.current = debugNow;
+      onDebugChange({
+        accelerate: activeControlsForCamera.throttle,
+        brake: activeControlsForCamera.brake,
+        left: activeControlsForCamera.left,
+        right: activeControlsForCamera.right,
+        speed: Math.round(kmh(state.speed)),
+        positionZ: Number(state.position.z.toFixed(1)),
+        offRoad: Math.abs(state.position.x) > 3.65,
+        collision: lastCollisionRef.current,
+      });
+    }
   });
 
   return (

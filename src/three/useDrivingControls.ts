@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 export interface DrivingControls {
   left: boolean;
@@ -17,18 +17,21 @@ const EMPTY_CONTROLS: DrivingControls = {
 };
 
 export function useDrivingControls() {
+  const controlsRef = useRef<DrivingControls>({ ...EMPTY_CONTROLS });
   const [controls, setControls] = useState<DrivingControls>(EMPTY_CONTROLS);
 
   const setControl = useCallback((key: DrivingControlKey, pressed: boolean) => {
-    setControls((current) => ({ ...current, [key]: pressed }));
+    controlsRef.current = { ...controlsRef.current, [key]: pressed };
+    setControls(controlsRef.current);
   }, []);
 
   const resetControls = useCallback(() => {
-    setControls(EMPTY_CONTROLS);
+    controlsRef.current = { ...EMPTY_CONTROLS };
+    setControls(controlsRef.current);
   }, []);
 
   return useMemo(
-    () => ({ controls, setControl, resetControls }),
+    () => ({ controls, controlsRef, setControl, resetControls }),
     [controls, resetControls, setControl],
   );
 }

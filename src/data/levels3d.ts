@@ -43,3 +43,42 @@ export function getChapterLevels(chapterId: number): Level3D[] {
   const end = chapterId * 10;
   return LEVELS_3D.filter((l) => l.id >= start && l.id <= end);
 }
+
+export function validateLevels(): boolean {
+  const errors: string[] = [];
+
+  if (LEVELS_3D.length !== 100) {
+    errors.push(`levels.length should be 100, got ${LEVELS_3D.length}`);
+  }
+
+  for (let id = 1; id <= 100; id += 1) {
+    const level = LEVELS_3D[id - 1];
+    if (!level) {
+      errors.push(`missing level ${id}`);
+      continue;
+    }
+    if (level.id !== id) errors.push(`level index ${id} has id ${level.id}`);
+    if (!level.name) errors.push(`level ${id} missing title/name`);
+    if (!level.mission) errors.push(`level ${id} missing mission`);
+    if (!level.learningGoal) errors.push(`level ${id} missing learningGoal`);
+    if (!level.summary) errors.push(`level ${id} missing summaryText/summary`);
+  }
+
+  for (let chapterId = 1; chapterId <= 10; chapterId += 1) {
+    const count = getChapterLevels(chapterId).length;
+    if (count !== 10) errors.push(`chapter ${chapterId} should have 10 levels, got ${count}`);
+  }
+
+  const level30 = getLevel3D(30);
+  const level31 = getLevel3D(31);
+  const level100 = getLevel3D(100);
+  if (level30.id + 1 !== level31.id) errors.push('level 30 nextLevelId should be 31');
+  if (level100.id !== 100) errors.push('level 100 missing');
+
+  if (errors.length > 0) {
+    console.error('[validateLevels]', errors);
+    return false;
+  }
+  console.info('[validateLevels] ok: 100 continuous 3D driving levels');
+  return true;
+}
