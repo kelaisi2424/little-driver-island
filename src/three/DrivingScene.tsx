@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import type { Level3D } from '../data/levels3d';
 import type { Car3D } from '../data/cars3d';
 import type { DrivingTelemetry } from '../data/challenge3d';
+import type { StoryMission } from '../data/storyMissions';
 import { playSound } from '../utils/sound';
 import CarModel from './CarModel';
 import Checkpoints from './Checkpoints';
@@ -20,6 +21,14 @@ import {
   resetDrivingState,
   updateDrivingPhysics,
 } from './useDrivingPhysics';
+// v1.9 任务玩法
+import MissionObjects from './MissionObjects';
+import { tickMission, type MissionTickResult } from './missionLogic';
+import {
+  createMissionProgress,
+  resetMissionProgress,
+  type MissionProgress,
+} from './missionObjectives';
 
 interface DrivingSceneProps {
   level: Level3D;
@@ -27,14 +36,20 @@ interface DrivingSceneProps {
   controlsRef: RefObject<DrivingControls>;
   paused: boolean;
   car?: Car3D;
+  /** v1.9：当前剧情任务（决定 3D 场景里出现什么 + 通关条件） */
+  mission?: StoryMission;
   /** v1.7: 共享 telemetry ref，DrivingScene 每帧写入，外面读 */
   telemetryRef?: RefObject<DrivingTelemetry>;
+  /** v1.9：共享 mission progress ref，外面读用于 HUD/通关页 */
+  missionProgressRef?: RefObject<MissionProgress>;
   onSpeedChange: (speed: number) => void;
   onCheckpointChange: (passed: number) => void;
   onHint: (message: string) => void;
   /** v1.7: 通关回调签名扩展 → 多带 telemetry，挑战模式打分用 */
   onComplete: (stars: number, elapsedSeconds: number, telemetry?: DrivingTelemetry) => void;
   onTelemetryChange?: (telemetry: DrivingTelemetry) => void;
+  /** v1.9：mission progress 变化（HUD 同步用） */
+  onMissionProgress?: (progress: MissionProgress) => void;
   onDebugChange?: (debug: DrivingDebugState) => void;
 }
 
@@ -47,6 +62,25 @@ export interface DrivingDebugState {
   positionZ: number;
   offRoad: boolean;
   collision: boolean;
+}
+
+// v1.9: 根据 mission 类型给"开局提示"
+function getStartHintForMission(mission: StoryMission): string {
+  switch (mission.gameplayType) {
+    case 'schoolPickup':    return '到站慢慢停，把小朋友接上车';
+    case 'delivery':        return '送货上路，找对颜色屋子';
+    case 'repairDelivery':  return '小心开车，零件不能撞掉';
+    case 'trafficRule':     return '前方有路口，看灯再走';
+    case 'parking':         return '慢慢开进 P 车位';
+    case 'rainyDrive':      return '雨天慢慢开，绕开水坑';
+    case 'colorRoute':      return '看清颜色，跟着路线走';
+    case 'numberLane':      return '看数字门，开过去';
+    case 'multiStopRoute':  return '一站一站慢慢停';
+    case 'pedestrianYield': return '前方有斑马线，注意行人';
+    case 'mixedMission':    return '综合任务开始，认真做';
+    case 'simpleDrive':
+    default:                return '按住油门，开始驾驶';
+  }
 }
 
 function TrafficLight({ z }: { z: number }) {
@@ -78,12 +112,15 @@ function SceneContent({
   controlsRef,
   paused,
   car,
+  mission,
   telemetryRef,
+  missionProgressRef,
   onSpeedChange,
   onCheckpointChange,
   onHint,
   onComplete,
   onTelemetryChange,
+  onMissionProgress,
   onDebugChange,
 }: DrivingSceneProps) {
   const groupRef = useRef<THREE.Group | null>(null);
@@ -105,6 +142,9 @@ function SceneContent({
   const brakeCountRef = useRef(0);
   const wasBrakingRef = useRef(false);
   const lastTelemetryEmitRef = useRef(0);
+  // v1.9: mission progress（始终用本地 ref 作为唯一来源；外部 ref 在每帧末尾同步）
+  const missionLocalRef = useRef<MissionProgress>(createMissionProgress());
+  const lastMissionEmitRef = useRef(0);
   const { camera } = useThree();
   const conePositions = useMemo(
     () => level.cones.map((cone) => new THREE.Vector3(cone.x, 0.45, cone.z)),
@@ -138,10 +178,16 @@ function SceneContent({
       t.parkingAccuracy = 0;
       t.completed = false;
     }
+    // v1.9: mission progress 也清零
+    resetMissionProgress(missionLocalRef.current);
+    if (missionProgressRef?.current) resetMissionProgress(missionProgressRef.current);
+    lastMissionEmitRef.current = 0;
     onSpeedChange(0);
     onCheckpointChange(0);
-    onHint(level.kind === 'parking' ? '慢慢开进 P 车位。' : '按住油门，开始驾驶。');
-  }, [level, onCheckpointChange, onHint, onSpeedChange, telemetryRef]);
+    // 起始提示根据 mission 类型给一句"任务化"提示
+    const startHint = mission ? getStartHintForMission(mission) : (level.kind === 'parking' ? '慢慢开进 P 车位。' : '按住油门，开始驾驶。');
+    onHint(startHint);
+  }, [level, mission, onCheckpointChange, onHint, onSpeedChange, telemetryRef, missionProgressRef]);
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.04);
@@ -180,29 +226,84 @@ function SceneContent({
         onHint('开回路上哦。');
       }
 
-      const nextCheckpoint = level.checkpoints[passedRef.current];
-      if (
-        nextCheckpoint
-        && state.position.distanceTo(new THREE.Vector3(nextCheckpoint.x, 0.48, nextCheckpoint.z)) < 1.6
-      ) {
-        passedRef.current += 1;
+      // v1.9: 任务玩法 tick —— 替代旧的 checkpoint+finishReached 逻辑
+      const missionProgress = missionLocalRef.current;
+      missionProgress.collisions = collisionsRef.current;
+      const tickResult: MissionTickResult = mission
+        ? tickMission(
+            mission,
+            level,
+            {
+              positionX: state.position.x,
+              positionZ: state.position.z,
+              speed: state.speed,
+              delta,
+              collisionThisFrame: collision,
+            },
+            missionProgress,
+            now,
+          )
+        : (() => {
+            // 没有 mission（兜底）→ 走简单的旧逻辑
+            const nextCp = level.checkpoints[passedRef.current];
+            if (nextCp && state.position.distanceTo(new THREE.Vector3(nextCp.x, 0.48, nextCp.z)) < 1.6) {
+              passedRef.current += 1;
+              onCheckpointChange(passedRef.current);
+            }
+            const cpDone = passedRef.current >= level.checkpoints.length;
+            const finished = level.kind === 'parking'
+              ? state.position.z <= level.finishZ + 2.3 && Math.abs(state.position.x) < 1.7 && state.speed < 5
+              : state.position.z <= level.finishZ;
+            const r: MissionTickResult = { completed: cpDone && finished };
+            return r;
+          })();
+
+      // 速度修正（雨天打滑）
+      if (tickResult.speedFactor !== undefined) {
+        state.speed *= tickResult.speedFactor;
+      }
+      // 同步 checkpoint UI
+      if (mission && missionProgress.checkpointsHit !== passedRef.current) {
+        passedRef.current = missionProgress.checkpointsHit;
         onCheckpointChange(passedRef.current);
-        onHint('通过检查点！');
-        playSound('star');
+      }
+      // 提示
+      if (tickResult.hint) {
+        onHint(tickResult.hint);
+      }
+      // 事件音效
+      if (tickResult.event) {
+        switch (tickResult.event.type) {
+          case 'pickup':
+          case 'stop-visited':
+          case 'light-pass':
+          case 'number-correct':
+          case 'color-correct':
+          case 'pedestrian-yielded':
+          case 'parking-success':
+            playSound('star');
+            break;
+          case 'delivery-correct':
+            playSound('complete');
+            break;
+          case 'delivery-wrong':
+          case 'light-violation':
+          case 'number-wrong':
+          case 'color-wrong':
+          case 'puddle-splash':
+          case 'cargo-warning':
+            playSound('fail');
+            break;
+        }
       }
 
-      const checkpointsDone = passedRef.current >= level.checkpoints.length;
-      const finishReached = level.kind === 'parking'
-        ? state.position.z <= level.finishZ + 2.3 && Math.abs(state.position.x) < 1.7 && state.speed < 5
-        : state.position.z <= level.finishZ;
-
-      if (checkpointsDone && finishReached) {
+      // 通关
+      if (tickResult.completed) {
         completedRef.current = true;
         state.speed = 0;
         playSound('complete');
         const elapsedSeconds = Math.max(8, Math.round((Date.now() - startRef.current) / 1000));
         const stars = level.id === 2 && lastHitRef.current > 0 ? 2 : 3;
-        // v1.7: 把 telemetry 一起送回
         const telemetry: DrivingTelemetry = {
           elapsedTime: elapsedSeconds,
           collisions: collisionsRef.current,
@@ -217,6 +318,7 @@ function SceneContent({
           completed: true,
         };
         if (telemetryRef?.current) Object.assign(telemetryRef.current, telemetry);
+        missionProgress.finished = true;
         window.setTimeout(() => onComplete(stars, elapsedSeconds, telemetry), 500);
       }
     }
@@ -288,6 +390,18 @@ function SceneContent({
         if (onTelemetryChange) onTelemetryChange(tele);
       }
     }
+    // v1.9：mission progress 实时同步给 HUD（同样 250ms 防抖）+ 同步到外部 ref
+    if (missionProgressRef?.current) {
+      Object.assign(missionProgressRef.current, missionLocalRef.current);
+    }
+    if (!completedRef.current && onMissionProgress) {
+      const mNow = performance.now();
+      if (mNow - lastMissionEmitRef.current > 250) {
+        lastMissionEmitRef.current = mNow;
+        // 复制一份给外面（让 React 看到引用变化）
+        onMissionProgress({ ...missionLocalRef.current });
+      }
+    }
     const debugNow = performance.now();
     if (onDebugChange && debugNow - lastDebugRef.current > 180) {
       lastDebugRef.current = debugNow;
@@ -325,10 +439,27 @@ function SceneContent({
       <directionalLight position={[0, 6, -10]} intensity={0.25} color="#ffd9a3" />
       <Road length={level.roadLength} />
       <City />
-      <Obstacles cones={level.cones} />
-      <Checkpoints checkpoints={level.checkpoints} passed={passedRef.current} />
-      {level.kind === 'traffic' && <TrafficLight z={-56} />}
-      <FinishLine z={level.finishZ} parking={level.kind === 'parking'} />
+      {/* v1.9: 部分玩法把 cones 重用为水坑/任务物体，不再渲染原始路锥 */}
+      {(!mission || (mission.gameplayType !== 'rainyDrive')) && (
+        <Obstacles cones={level.cones} />
+      )}
+      {/* 数字车道/颜色路线/多站点会用专属物体代替 checkpoint 圆环 */}
+      {(!mission
+        || mission.gameplayType === 'simpleDrive'
+        || mission.gameplayType === 'schoolPickup'
+        || mission.gameplayType === 'parking'
+        || mission.gameplayType === 'rainyDrive'
+        || mission.gameplayType === 'repairDelivery'
+        || mission.gameplayType === 'pedestrianYield'
+      ) && (
+        <Checkpoints checkpoints={level.checkpoints} passed={passedRef.current} />
+      )}
+      {level.kind === 'traffic' && (!mission || mission.gameplayType !== 'trafficRule') && <TrafficLight z={-56} />}
+      <FinishLine z={level.finishZ} parking={level.kind === 'parking' || (mission?.gameplayType === 'parking') || (mission?.gameplayType === 'mixedMission' && (mission.missionParams.subTypes ?? []).includes('parking'))} />
+      {/* v1.9: 任务专属 3D 物体 */}
+      {mission && (
+        <MissionObjects level={level} mission={mission} progressRef={missionLocalRef} />
+      )}
       <group ref={groupRef}>
         <CarModel stateRef={stateRef} car={car} />
       </group>
