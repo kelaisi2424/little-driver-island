@@ -342,16 +342,28 @@ export default function Game3DPage() {
         </section>
       )}
 
-      {screen === 'complete' && (
-        <LevelComplete3D
-          level={level}
-          stars={lastStars}
-          chapterStickerId={chapterStickerJustUnlocked}
-          onNext={goNext}
-          onRetry={() => startLevel(level)}
-          onHome={() => setScreen('home')}
-        />
-      )}
+      {screen === 'complete' && (() => {
+        // v11 hotfix：根据 level.id 计算通关页模式
+        const isFinal = level.id >= LEVELS_3D.length;
+        const isChapterEnd = level.id % 10 === 0 && !isFinal;
+        const mode = isFinal ? 'final' : isChapterEnd ? 'chapter-end' : 'regular';
+        const nextChapter = isChapterEnd
+          ? CHAPTERS_3D[Math.floor(level.id / 10)] ?? null  // L10 → idx 1 = ch2
+          : null;
+        return (
+          <LevelComplete3D
+            level={level}
+            stars={lastStars}
+            mode={mode}
+            chapterStickerId={chapterStickerJustUnlocked}
+            nextChapter={nextChapter}
+            onNext={goNext}
+            onRetry={() => startLevel(level)}
+            onHome={() => setScreen('home')}
+            onChapters={() => setScreen('chapters')}
+          />
+        );
+      })()}
 
       {screen === 'parent' && (
         <ParentSettings config={config} onSave={saveParentConfig} onBack={() => setScreen('home')} />
