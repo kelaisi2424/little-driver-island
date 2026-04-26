@@ -175,10 +175,20 @@ function SceneContent({
 
   return (
     <>
-      <Sky sunPosition={[80, 40, 20]} turbidity={3} rayleigh={0.7} />
-      <fog attach="fog" args={['#dff7ff', 34, 128]} />
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[5, 10, 8]} intensity={1.45} />
+      <Sky sunPosition={[80, 40, 20]} turbidity={2.4} rayleigh={0.6} mieCoefficient={0.005} mieDirectionalG={0.85} />
+      {/* v13 画质升级：更暖的雾色 + 更近开始 + 更远消失，配 fog mapping 看远处空间感 */}
+      <fog attach="fog" args={['#d6efff', 30, 140]} />
+      {/* v13 三层光：天空环境光 + 主太阳 + 反向补光 */}
+      <hemisphereLight color="#fffaf0" groundColor="#7fa55b" intensity={0.55} />
+      <ambientLight intensity={0.32} />
+      <directionalLight
+        position={[8, 14, 6]}
+        intensity={1.4}
+        color="#fff5e0"
+        castShadow={false}
+      />
+      {/* 反向补光，让车身阴面不死黑 */}
+      <directionalLight position={[-6, 8, -4]} intensity={0.35} color="#a8d8ff" />
       <Road length={level.roadLength} />
       <City />
       <Obstacles cones={level.cones} />
@@ -196,9 +206,15 @@ export default function DrivingScene(props: DrivingSceneProps) {
   return (
     <Canvas
       className="game3d-canvas"
-      dpr={[1, 1.5]}
-      camera={{ position: [0, 3.3, 7.2], fov: 66, near: 0.1, far: 180 }}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      dpr={[1, 2]}      // v13 画质升级：高清屏满血开
+      camera={{ position: [0, 3.5, 8], fov: 65, near: 0.1, far: 200 }}
+      gl={{
+        antialias: true,
+        powerPreference: 'high-performance',
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.05,
+        outputColorSpace: THREE.SRGBColorSpace,
+      }}
     >
       <SceneContent {...props} />
     </Canvas>

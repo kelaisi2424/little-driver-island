@@ -77,37 +77,57 @@ export default function CarModel({ stateRef }: CarModelProps) {
         <meshBasicMaterial color="black" transparent opacity={0.26} depthWrite={false} />
       </mesh>
 
-      <mesh position={[0, 0.22, 0.12]}>
-        <boxGeometry args={[1.92, 0.42, 2.42]} />
-        <meshStandardMaterial color="#e92323" roughness={0.42} metalness={0.02} />
+      {/* v13 升级：主车身用更扁平赛车比例 + 多层红色 */}
+      <mesh position={[0, 0.18, 0.12]}>
+        <boxGeometry args={[1.96, 0.46, 2.5]} />
+        <meshStandardMaterial color="#dc2626" roughness={0.36} metalness={0.16} />
       </mesh>
-      <mesh position={[0, 0.28, -1.2]} rotation={[0.04, 0, 0]}>
-        <boxGeometry args={[1.64, 0.32, 0.98]} />
-        <meshStandardMaterial color="#ff5148" roughness={0.36} metalness={0.02} />
+      {/* 车尾稍微高一点（甲虫感） */}
+      <mesh position={[0, 0.32, -1.18]} rotation={[0.04, 0, 0]}>
+        <boxGeometry args={[1.7, 0.36, 1.05]} />
+        <meshStandardMaterial color="#ef4444" roughness={0.32} metalness={0.18} />
       </mesh>
-      <mesh position={[0, 0.35, 1.03]} rotation={[-0.06, 0, 0]}>
-        <boxGeometry args={[1.74, 0.48, 1.0]} />
-        <meshStandardMaterial color="#c9141c" roughness={0.46} metalness={0.02} />
+      {/* 车头稍低（鼻子向前） */}
+      <mesh position={[0, 0.32, 1.05]} rotation={[-0.07, 0, 0]}>
+        <boxGeometry args={[1.78, 0.42, 1.05]} />
+        <meshStandardMaterial color="#b91c1c" roughness={0.42} metalness={0.16} />
+      </mesh>
+      {/* 车身侧裙（暗色描边边） */}
+      <mesh position={[-0.97, 0.12, 0.1]}>
+        <boxGeometry args={[0.06, 0.24, 2.4]} />
+        <meshStandardMaterial color="#5a0a0a" roughness={0.6} />
+      </mesh>
+      <mesh position={[0.97, 0.12, 0.1]}>
+        <boxGeometry args={[0.06, 0.24, 2.4]} />
+        <meshStandardMaterial color="#5a0a0a" roughness={0.6} />
+      </mesh>
+      {/* 车顶高光带 */}
+      <mesh position={[0, 0.42, 0.12]}>
+        <boxGeometry args={[1.78, 0.05, 2.3]} />
+        <meshStandardMaterial color="#ffffff" emissive="#ff8a8a" emissiveIntensity={0.25} roughness={0.2} metalness={0.4} transparent opacity={0.55} />
       </mesh>
 
-      <mesh position={[0, 0.78, -0.1]} rotation={[0.03, 0, 0]}>
-        <boxGeometry args={[1.13, 0.5, 1.24]} />
-        <meshStandardMaterial color="#fa6a60" roughness={0.34} />
+      {/* 驾驶舱：更小更低更像跑车 */}
+      <mesh position={[0, 0.7, -0.05]} rotation={[0.04, 0, 0]}>
+        <boxGeometry args={[1.05, 0.42, 1.18]} />
+        <meshStandardMaterial color="#fa6a60" roughness={0.32} metalness={0.06} />
       </mesh>
-      <mesh position={[0, 0.8, -0.65]}>
-        <boxGeometry args={[0.95, 0.3, 0.08]} />
+      {/* v13 升级：玻璃 - 后挡风斜一点 + 前挡风斜一点 */}
+      <mesh position={[0, 0.74, -0.6]} rotation={[-0.18, 0, 0]}>
+        <boxGeometry args={[0.92, 0.34, 0.08]} />
         <primitive object={glassMaterial} attach="material" />
       </mesh>
-      <mesh position={[0, 0.79, 0.38]}>
-        <boxGeometry args={[0.92, 0.28, 0.08]} />
+      <mesh position={[0, 0.74, 0.42]} rotation={[0.22, 0, 0]}>
+        <boxGeometry args={[0.9, 0.32, 0.08]} />
         <primitive object={glassMaterial} attach="material" />
       </mesh>
-      <mesh position={[-0.62, 0.73, -0.08]}>
-        <boxGeometry args={[0.08, 0.28, 0.72]} />
+      {/* 侧窗 */}
+      <mesh position={[-0.58, 0.66, -0.05]}>
+        <boxGeometry args={[0.06, 0.26, 0.7]} />
         <primitive object={glassMaterial} attach="material" />
       </mesh>
-      <mesh position={[0.62, 0.73, -0.08]}>
-        <boxGeometry args={[0.08, 0.28, 0.72]} />
+      <mesh position={[0.58, 0.66, -0.05]}>
+        <boxGeometry args={[0.06, 0.26, 0.7]} />
         <primitive object={glassMaterial} attach="material" />
       </mesh>
 
@@ -124,14 +144,35 @@ export default function CarModel({ stateRef }: CarModelProps) {
         <boxGeometry args={[0.66, 0.18, 0.02]} />
         <meshStandardMaterial color="#ffffff" emissive="#fff" emissiveIntensity={0.12} />
       </mesh>
-      {/* 后视镜 */}
-      <mesh position={[-1.04, 0.78, -0.4]}>
-        <boxGeometry args={[0.18, 0.14, 0.18]} />
-        <meshStandardMaterial color="#c9141c" roughness={0.4} />
+      {/* v13 后视镜：跟随驾驶舱降低位置 + 椭圆镜片 */}
+      <mesh position={[-1.04, 0.66, -0.32]}>
+        <boxGeometry args={[0.18, 0.12, 0.16]} />
+        <meshStandardMaterial color="#b91c1c" roughness={0.4} />
       </mesh>
-      <mesh position={[1.04, 0.78, -0.4]}>
-        <boxGeometry args={[0.18, 0.14, 0.18]} />
-        <meshStandardMaterial color="#c9141c" roughness={0.4} />
+      <mesh position={[-1.12, 0.68, -0.32]}>
+        <sphereGeometry args={[0.07, 8, 6]} />
+        <meshStandardMaterial color="#3a587a" emissive="#82d2ff" emissiveIntensity={0.3} />
+      </mesh>
+      <mesh position={[1.04, 0.66, -0.32]}>
+        <boxGeometry args={[0.18, 0.12, 0.16]} />
+        <meshStandardMaterial color="#b91c1c" roughness={0.4} />
+      </mesh>
+      <mesh position={[1.12, 0.68, -0.32]}>
+        <sphereGeometry args={[0.07, 8, 6]} />
+        <meshStandardMaterial color="#3a587a" emissive="#82d2ff" emissiveIntensity={0.3} />
+      </mesh>
+      {/* v13 尾翼小扰流板 */}
+      <mesh position={[0, 0.6, -1.55]}>
+        <boxGeometry args={[1.5, 0.06, 0.18]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.6} />
+      </mesh>
+      <mesh position={[-0.65, 0.5, -1.55]}>
+        <boxGeometry args={[0.06, 0.18, 0.18]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.6} />
+      </mesh>
+      <mesh position={[0.65, 0.5, -1.55]}>
+        <boxGeometry args={[0.06, 0.18, 0.18]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.6} />
       </mesh>
       <mesh position={[0, 0.18, 1.65]}>
         <boxGeometry args={[1.38, 0.18, 0.16]} />
