@@ -166,21 +166,21 @@ function SceneContent({
 
     const activeControlsForCamera = controlsRef.current;
     const speedFactor = THREE.MathUtils.clamp(state.speed / 19.5, 0, 1);
-    // v14 画质：竖/横屏切 FOV + 速度感 FOV 微变化（max 速度时 +3°）
+    // v1.6: 速度感 FOV 加大幅度 + 竖横屏分别校准
     const isPortrait = window.innerHeight > window.innerWidth;
     if (camera instanceof THREE.PerspectiveCamera) {
-      const baseFov = isPortrait ? 70 : 60;
-      const targetFov = baseFov + speedFactor * 3.5; // 速度越快越广角，制造速度感
-      // 平滑过渡而不是阶跃，避免观感突变
+      const baseFov = isPortrait ? 68 : 60;
+      // 低速 60，高速 70（10° 范围，比 v1.5 的 3.5° 大幅强化速度感）
+      const targetFov = baseFov + speedFactor * 7;
       camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08);
       camera.updateProjectionMatrix();
     }
-    // 刹车时镜头靠近 + 平视；油门时镜头拉远 + 看更远
-    const brakeZoom = activeControlsForCamera.brake ? -1.4 : 0;
-    const baseFollow = isPortrait ? 8.4 : 6.4;
-    const baseHeight = isPortrait ? 4.2 : 2.95;
-    const followDistance = baseFollow + speedFactor * 3.6 + brakeZoom;
-    const cameraHeight = baseHeight + speedFactor * 0.85;
+    // v1.6: 镜头更低更近，更接近赛车视角
+    const brakeZoom = activeControlsForCamera.brake ? -1.6 : 0;
+    const baseFollow = isPortrait ? 7.8 : 5.8;
+    const baseHeight = isPortrait ? 3.6 : 2.55;
+    const followDistance = baseFollow + speedFactor * 3.4 + brakeZoom;
+    const cameraHeight = baseHeight + speedFactor * 0.7;
     const sideLean = -state.steering * speedFactor * 0.55;
     // v14 画质：撞锥时摄像机轻微震动（用 state.shakeTime 同步）
     const shakeAmt = state.shakeTime > 0
@@ -192,10 +192,12 @@ function SceneContent({
       state.position.z + Math.cos(state.rotationY) * followDistance - Math.sin(state.rotationY) * sideLean,
     );
     camera.position.lerp(desiredCamera, 0.085);
+    // v1.6: lookAhead 距离随速度变长，速度越快看越远
+    const lookDist = 9 + speedFactor * 7;
     const lookAhead = new THREE.Vector3(
-      state.position.x - Math.sin(state.rotationY) * (10 + speedFactor * 5.5),
-      state.position.y + 1.2,
-      state.position.z - Math.cos(state.rotationY) * (10 + speedFactor * 5.5),
+      state.position.x - Math.sin(state.rotationY) * lookDist,
+      state.position.y + 0.9,  // 视线压低，更像驾驶视角
+      state.position.z - Math.cos(state.rotationY) * lookDist,
     );
     camera.lookAt(lookAhead);
     smoothSpeedRef.current = THREE.MathUtils.lerp(smoothSpeedRef.current, kmh(state.speed), 0.16);
@@ -218,20 +220,23 @@ function SceneContent({
 
   return (
     <>
-      <Sky sunPosition={[80, 40, 20]} turbidity={2.4} rayleigh={0.6} mieCoefficient={0.005} mieDirectionalG={0.85} />
-      {/* v13 画质升级：更暖的雾色 + 更近开始 + 更远消失，配 fog mapping 看远处空间感 */}
-      <fog attach="fog" args={['#d6efff', 30, 140]} />
-      {/* v13 三层光：天空环境光 + 主太阳 + 反向补光 */}
-      <hemisphereLight color="#fffaf0" groundColor="#7fa55b" intensity={0.55} />
-      <ambientLight intensity={0.32} />
+      <Sky sunPosition={[80, 40, 20]} turbidity={2.0} rayleigh={0.55} mieCoefficient={0.005} mieDirectionalG={0.86} />
+      {/* v1.6 雾：远处雾化更柔，配合摄像机 lookAhead，沉浸感更强 */}
+      <fog attach="fog" args={['#cfe6f6', 36, 155]} />
+      {/* v1.6 灯光：四层光（半球光 + 环境 + 主太阳 + 蓝色补光 + 后方暖色边缘光） */}
+      <hemisphereLight color="#fffaf0" groundColor="#83b463" intensity={0.62} />
+      <ambientLight intensity={0.28} />
+      {/* 主太阳光（左前上方暖白） */}
       <directionalLight
-        position={[8, 14, 6]}
-        intensity={1.4}
-        color="#fff5e0"
+        position={[10, 18, 8]}
+        intensity={1.55}
+        color="#fff3d6"
         castShadow={false}
       />
-      {/* 反向补光，让车身阴面不死黑 */}
-      <directionalLight position={[-6, 8, -4]} intensity={0.35} color="#a8d8ff" />
+      {/* 反向蓝色补光（车身阴面不死黑） */}
+      <directionalLight position={[-7, 9, -5]} intensity={0.42} color="#b3d8ff" />
+      {/* v1.6 新增：后方暖色边缘光（车尾轮廓更清楚） */}
+      <directionalLight position={[0, 6, -10]} intensity={0.25} color="#ffd9a3" />
       <Road length={level.roadLength} />
       <City />
       <Obstacles cones={level.cones} />
@@ -249,13 +254,13 @@ export default function DrivingScene(props: DrivingSceneProps) {
   return (
     <Canvas
       className="game3d-canvas"
-      dpr={[1, 2]}      // v13 画质升级：高清屏满血开
-      camera={{ position: [0, 3.5, 8], fov: 65, near: 0.1, far: 200 }}
+      dpr={[1, 2]}      // v1.6 仍 1-2x，但移动设备会被压回 1
+      camera={{ position: [0, 3.0, 7.5], fov: 64, near: 0.1, far: 220 }}
       gl={{
         antialias: true,
         powerPreference: 'high-performance',
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.05,
+        toneMappingExposure: 1.18,           // v1.6: 略亮（1.05 → 1.18）
         outputColorSpace: THREE.SRGBColorSpace,
       }}
     >
