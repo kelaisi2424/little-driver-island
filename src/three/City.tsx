@@ -30,15 +30,18 @@ function Billboard({ x, z, labelColor }: { x: number; z: number; labelColor: str
   );
 }
 
+// v8 性能优化：建筑数量 22 → 14，每栋最多 3 行窗户。
+const BUILDING_COUNT = 14;
+
 export default function City() {
   const buildings = useMemo<Building[]>(() => {
-    return Array.from({ length: 22 }).map((_, index) => {
+    return Array.from({ length: BUILDING_COUNT }).map((_, index) => {
       const side = index % 2 === 0 ? -1 : 1;
-      const far = index / 22;
-      const height = 1.9 + ((index * 1.43) % 4.8);
+      const far = index / BUILDING_COUNT;
+      const height = 2.0 + ((index * 1.43) % 4.6);
       return {
         x: side * (9.2 + (index % 4) * 1.35),
-        z: -12 - index * 6.4,
+        z: -12 - index * 9.5,
         h: height,
         w: 1.45 + (index % 5) * 0.28,
         d: 1.7 + (index % 4) * 0.32,
@@ -57,8 +60,8 @@ export default function City() {
             <boxGeometry args={[building.w, building.h, building.d]} />
             <meshStandardMaterial color={building.color} roughness={0.74} transparent opacity={building.fade} />
           </mesh>
-          {Array.from({ length: Math.max(2, Math.floor(building.h / 0.62)) }).map((_, row) => (
-            <group key={row} position={[0, row * 0.55 - building.h / 2 + 0.55, building.d / 2 + 0.012]}>
+          {Array.from({ length: Math.min(3, Math.max(2, Math.floor(building.h / 0.9))) }).map((_, row) => (
+            <group key={row} position={[0, row * 0.85 - building.h / 2 + 0.7, building.d / 2 + 0.012]}>
               <mesh position={[-building.w * 0.22, 0, 0]}>
                 <boxGeometry args={[0.24, 0.14, 0.025]} />
                 <meshStandardMaterial color={building.windowColor} emissive={building.windowColor} emissiveIntensity={0.04} />
