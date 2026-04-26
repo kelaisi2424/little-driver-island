@@ -94,8 +94,9 @@ export default function Road({ length }: RoadProps) {
 
       {Array.from({ length: dashCount }).map((_, index) => (
         <mesh key={`dash-${index}`} position={[0, 0.035, -index * 7 - 2.5]}>
-          <boxGeometry args={[0.24, 0.045, 3.05]} />
-          <meshStandardMaterial color="#fff0a8" emissive="#f4d97b" emissiveIntensity={0.08} roughness={0.35} />
+          <boxGeometry args={[0.28, 0.045, 3.2]} />
+          {/* v14 画质：车道虚线增强发光，速度感更强 */}
+          <meshStandardMaterial color="#fff7c2" emissive="#ffd54a" emissiveIntensity={0.35} roughness={0.32} />
         </mesh>
       ))}
 
