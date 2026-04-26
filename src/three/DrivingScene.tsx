@@ -3,6 +3,7 @@ import { Sky } from '@react-three/drei';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import type { Level3D } from '../data/levels3d';
+import type { Car3D } from '../data/cars3d';
 import { playSound } from '../utils/sound';
 import CarModel from './CarModel';
 import Checkpoints from './Checkpoints';
@@ -24,6 +25,7 @@ interface DrivingSceneProps {
   controls: DrivingControls;
   controlsRef: RefObject<DrivingControls>;
   paused: boolean;
+  car?: Car3D;
   onSpeedChange: (speed: number) => void;
   onCheckpointChange: (passed: number) => void;
   onHint: (message: string) => void;
@@ -70,6 +72,7 @@ function SceneContent({
   controls,
   controlsRef,
   paused,
+  car,
   onSpeedChange,
   onCheckpointChange,
   onHint,
@@ -236,7 +239,7 @@ function SceneContent({
       {level.kind === 'traffic' && <TrafficLight z={-56} />}
       <FinishLine z={level.finishZ} parking={level.kind === 'parking'} />
       <group ref={groupRef}>
-        <CarModel stateRef={stateRef} />
+        <CarModel stateRef={stateRef} car={car} />
       </group>
     </>
   );
