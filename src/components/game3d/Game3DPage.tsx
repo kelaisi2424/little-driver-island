@@ -9,9 +9,11 @@ import {
   addLearningRecord,
   loadConfig,
   loadProgress,
+  loadSelectedCarId,
   saveConfig,
   updateLevelProgress,
 } from '../../utils/storage';
+import { CARS_3D, getCar3D } from '../../data/cars3d';
 import { awardSticker } from '../../utils/stickers';
 import DrivingScene, { type DrivingDebugState } from '../../three/DrivingScene';
 import { useDrivingControls } from '../../three/useDrivingControls';
@@ -24,6 +26,7 @@ import MissionCard from './MissionCard';
 import VirtualControls from './VirtualControls';
 import ChapterSelect, { type ChapterProgress } from './ChapterSelect';
 import LevelSelectChapter from './LevelSelectChapter';
+import GaragePage from './GaragePage';
 
 type Game3DScreen =
   | 'home'
@@ -34,6 +37,7 @@ type Game3DScreen =
   | 'complete'
   | 'parent'
   | 'stickers'
+  | 'garage'    // v15: 车库选车页
   | 'rest';
 
 const DEFAULT_CONFIG: ParentConfig = {
@@ -128,6 +132,9 @@ export default function Game3DPage() {
   const [shouldRestBeforeNext, setShouldRestBeforeNext] = useState(false);
   const [drivingDebug, setDrivingDebug] = useState<DrivingDebugState | null>(null);
   const { controls, controlsRef, setControl, resetControls } = useDrivingControls();
+  // v15: 当前选中车
+  const [selectedCarId, setSelectedCarId] = useState<string>(() => loadSelectedCarId() ?? CARS_3D[0].id);
+  const selectedCar = useMemo(() => getCar3D(selectedCarId), [selectedCarId]);
   const usage = useDailyUsage(config.dailyMinutes);
 
   useEffect(() => {
@@ -278,6 +285,9 @@ export default function Game3DPage() {
               {usage.limitReached ? '今天任务完成啦' : `继续第 ${unlockedLevel} 关`}
             </button>
             <button onClick={() => setScreen('chapters')} type="button">章节选关</button>
+            <button onClick={() => setScreen('garage')} type="button">
+              {selectedCar.emoji} 我的车库
+            </button>
             <button onClick={() => setScreen('stickers')} type="button">贴纸册</button>
             <button
               onPointerDown={(event) => {
@@ -347,6 +357,7 @@ export default function Game3DPage() {
             level={level}
             controls={controls}
             controlsRef={controlsRef}
+            car={selectedCar}
             paused={paused}
             onSpeedChange={setSpeed}
             onCheckpointChange={setCheckpointPassed}
@@ -406,6 +417,17 @@ export default function Game3DPage() {
         <ParentSettings config={config} onSave={saveParentConfig} onBack={() => setScreen('home')} />
       )}
       {screen === 'stickers' && <StickerBook onBack={() => setScreen('home')} />}
+      {screen === 'garage' && (
+        <GaragePage
+          unlockedLevel={unlockedLevel}
+          selectedCarId={selectedCarId}
+          onBack={() => setScreen('home')}
+          onSelect={(id) => {
+            setSelectedCarId(id);
+            setScreen('home');
+          }}
+        />
+      )}
       {screen === 'rest' && (
         <RestPage
           onDone={() => setScreen('home')}

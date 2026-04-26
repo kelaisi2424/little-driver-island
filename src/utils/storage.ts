@@ -221,3 +221,14 @@ export function addLearningRecord(record: Omit<LearningRecord, 'date'>): void {
   records.unshift({ ...record, date: todayString() });
   safeSet(KEY_LEARNING, JSON.stringify(records.slice(0, 40)));
 }
+
+// ===== v15: 当前选择的车辆持久化 =====
+const KEY_CAR = 'kdjs:selectedCar:v1';
+
+export function loadSelectedCarId(): string | null {
+  return safeGet(KEY_CAR);
+}
+
+export function saveSelectedCarId(id: string): void {
+  safeSet(KEY_CAR, id);
+}

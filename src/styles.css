@@ -10230,3 +10230,105 @@ html, body, #root {
   .game3d-hud strong { font-size: 26px !important; }
   .game3d-hud em { font-size: 12px !important; }
 }
+
+/* =============================================================
+   v15 车库页：6 辆车选择
+   ============================================================= */
+.garage-page {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #82d5ff 0%, #c8efff 35%, #fff5e6 60%, #c4eaa3 100%);
+  padding: max(14px, env(safe-area-inset-top, 14px)) 14px max(14px, env(safe-area-inset-bottom, 14px));
+  overflow-y: auto;
+  z-index: 50;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.garage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 14px;
+  padding-bottom: 24px;
+}
+@media (min-width: 760px) {
+  .garage-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.garage-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 12px 12px;
+  border-radius: 18px;
+  border: 3px solid #2d1612;
+  background: linear-gradient(180deg, var(--car-color, #f3eddf) 0%, var(--car-dark, #c0bcaf) 100%);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.18);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+}
+.garage-card:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
+}
+.garage-card.locked {
+  background: linear-gradient(180deg, #d6d3cc 0%, #a8a39a 100%);
+  color: #423d36;
+  text-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+.garage-card.selected {
+  border-color: #ffd166;
+  box-shadow: 0 0 0 4px #ffd166, 0 5px 0 rgba(0, 0, 0, 0.18);
+}
+.garage-emoji {
+  font-size: 44px;
+  line-height: 1.1;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.2));
+}
+.garage-name {
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+.garage-desc {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.92;
+  text-align: center;
+  min-height: 28px;
+}
+.garage-status {
+  margin-top: 4px;
+}
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 2px solid #2d1612;
+  background: #fff;
+  color: #2d1612;
+  text-shadow: none;
+}
+.badge-selected {
+  background: #ffd166;
+  color: #2d1612;
+}
+.badge-ok {
+  background: #fff;
+}
+.badge-lock {
+  background: #423d36;
+  color: #fff;
+  border-color: #1c1610;
+}

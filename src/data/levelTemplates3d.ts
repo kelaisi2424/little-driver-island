@@ -57,16 +57,24 @@ function checkpointLine(n: number, count: number, startZ: number, endZ: number):
 }
 
 const baseDifficulty = (chapterId: number, n: number): 1 | 2 | 3 | 4 | 5 => {
-  // 章节越大基础难度越高，章内序号也加分
+  // v15 escalation：章节 + 章内序号双重升级
   const base = Math.ceil(chapterId / 2);     // 1..5
-  const bonus = n >= 8 ? 1 : 0;              // 章末稍难
+  const bonus = n >= 8 ? 1 : n >= 5 ? 0 : -1; // 章前轻松，章末加难
   return Math.min(5, Math.max(1, base + bonus)) as 1 | 2 | 3 | 4 | 5;
 };
 
 const baseRoadLength = (chapterId: number, n: number): number =>
-  120 + chapterId * 4 + n * 4; // 124..184
+  // v15 escalation：路更长（章末明显比章首长 36 米）
+  118 + chapterId * 5 + n * 4;
 
 const baseFinishZ = (length: number): number => -(length - 22);
+
+// v15 escalation：障碍/检查点数量按章内进度严格递增
+// n=1..10 → 大致 floor((n+offset)/2) 让 1→1, 2→1, 3→2, 4→2, 5→3, 6→3, 7→4, 8→4, 9→5, 10→5
+function rampCount(n: number, min: number, max: number): number {
+  const step = Math.floor((n + 1) / 2);   // 1,1,2,2,3,3,4,4,5,5
+  return Math.max(min, Math.min(max, min + step - 1));
+}
 
 // =============== 10 章模板 ===============
 
@@ -112,7 +120,7 @@ export const TEMPLATES: readonly ChapterTemplate[] = [
     baseLearningGoal: '看到障碍要慢慢绕开',
     roadLength: (n) => baseRoadLength(2, n),
     finishZ: (n) => baseFinishZ(baseRoadLength(2, n)),
-    conesPattern: (n) => spreadObstacles(n, Math.min(6, n + 1), -28, -(baseRoadLength(2, n) - 30)),
+    conesPattern: (n) => spreadObstacles(n, rampCount(n, 1, 6), -28, -(baseRoadLength(2, n) - 30)),
     difficulty: (n) => baseDifficulty(2, n),
   },
 
@@ -125,14 +133,14 @@ export const TEMPLATES: readonly ChapterTemplate[] = [
       '2 号到 3 号', '走 4 号车道', '走 5 号车道', '数字接力',
       '数字组合', '数字车道达人',
     ],
-    baseMission: (n) => `请按编号车道开过去（共 ${Math.min(5, 1 + Math.floor(n / 2))} 个数字）。`,
+    baseMission: (n) => `请按编号车道开过去（共 ${rampCount(n, 1, 5)} 个数字）。`,
     baseSummary: (n) => n <= 5
       ? `这是数字 ${n}，认识它真棒！`
       : '看清数字再开，不会走错路。',
     baseLearningGoal: '认识数字 1-5',
     roadLength: (n) => baseRoadLength(3, n),
     finishZ: (n) => baseFinishZ(baseRoadLength(3, n)),
-    checkpointsPattern: (n) => checkpointLine(n, Math.min(5, 1 + Math.floor(n / 2)), -25, -(baseRoadLength(3, n) - 30)),
+    checkpointsPattern: (n) => checkpointLine(n, rampCount(n, 1, 5), -25, -(baseRoadLength(3, n) - 30)),
     difficulty: (n) => baseDifficulty(3, n),
   },
 
@@ -149,7 +157,7 @@ export const TEMPLATES: readonly ChapterTemplate[] = [
     baseLearningGoal: '红灯停，绿灯行',
     roadLength: (n) => baseRoadLength(4, n),
     finishZ: (n) => baseFinishZ(baseRoadLength(4, n)),
-    checkpointsPattern: (n) => checkpointLine(n, 1 + Math.floor(n / 4), -50, -(baseRoadLength(4, n) - 30)),
+    checkpointsPattern: (n) => checkpointLine(n, rampCount(n, 1, 4), -50, -(baseRoadLength(4, n) - 30)),
     difficulty: (n) => baseDifficulty(4, n),
   },
 
@@ -184,7 +192,7 @@ export const TEMPLATES: readonly ChapterTemplate[] = [
     baseLearningGoal: '看到行人要让一让',
     roadLength: (n) => baseRoadLength(6, n),
     finishZ: (n) => baseFinishZ(baseRoadLength(6, n)),
-    checkpointsPattern: (n) => checkpointLine(n, 1 + Math.floor(n / 3), -32, -(baseRoadLength(6, n) - 30)),
+    checkpointsPattern: (n) => checkpointLine(n, rampCount(n, 1, 4), -32, -(baseRoadLength(6, n) - 30)),
     difficulty: (n) => baseDifficulty(6, n),
   },
 
@@ -203,7 +211,8 @@ export const TEMPLATES: readonly ChapterTemplate[] = [
     baseLearningGoal: '下雨天要慢一点',
     roadLength: (n) => baseRoadLength(7, n),
     finishZ: (n) => baseFinishZ(baseRoadLength(7, n)),
-    conesPattern: (n) => spreadObstacles(n, Math.min(6, 2 + Math.floor(n / 2)), -28, -(baseRoadLength(7, n) - 30)),
+    // 章 7 雨天：障碍数比章 2 多 +1，体现"雨天更难"
+    conesPattern: (n) => spreadObstacles(n, rampCount(n, 2, 7), -28, -(baseRoadLength(7, n) - 30)),
     difficulty: (n) => baseDifficulty(7, n),
   },
 
@@ -216,12 +225,12 @@ export const TEMPLATES: readonly ChapterTemplate[] = [
       '接 5 个小朋友', '送到幼儿园', '雨天接送', '复杂路线接送',
       '上下学接送', '小巴士队长',
     ],
-    baseMission: (n) => `接 ${Math.min(5, 1 + Math.floor((n + 1) / 2))} 个小朋友去幼儿园。`,
+    baseMission: (n) => `接 ${rampCount(n, 1, 5)} 个小朋友去幼儿园。`,
     baseSummary: () => '一个一个数清楚，小朋友安安全全到家。',
     baseLearningGoal: '数量对应 + 排队',
     roadLength: (n) => baseRoadLength(8, n),
     finishZ: (n) => baseFinishZ(baseRoadLength(8, n)),
-    checkpointsPattern: (n) => checkpointLine(n, Math.min(5, 1 + Math.floor((n + 1) / 2)), -28, -(baseRoadLength(8, n) - 30)),
+    checkpointsPattern: (n) => checkpointLine(n, rampCount(n, 1, 5), -28, -(baseRoadLength(8, n) - 30)),
     difficulty: (n) => baseDifficulty(8, n),
   },
 
@@ -238,7 +247,7 @@ export const TEMPLATES: readonly ChapterTemplate[] = [
     baseLearningGoal: '颜色识别',
     roadLength: (n) => baseRoadLength(9, n),
     finishZ: (n) => baseFinishZ(baseRoadLength(9, n)),
-    checkpointsPattern: (n) => checkpointLine(n, 1 + Math.floor(n / 3), -28, -(baseRoadLength(9, n) - 30)),
+    checkpointsPattern: (n) => checkpointLine(n, rampCount(n, 2, 5), -28, -(baseRoadLength(9, n) - 30)),
     difficulty: (n) => baseDifficulty(9, n),
   },
 
@@ -269,10 +278,11 @@ export const TEMPLATES: readonly ChapterTemplate[] = [
       ? '一路看灯、看路、慢慢开，就能安全到达！'
       : '综合驾驶：稳一点，安全最重要。',
     baseLearningGoal: '综合安全驾驶',
-    roadLength: (n) => 150 + n * 5,
-    finishZ: (n) => -(125 + n * 5),
-    conesPattern: (n) => spreadObstacles(n, Math.min(7, 3 + Math.floor(n / 3)), -28, -(125 + n * 5 - 30)),
-    checkpointsPattern: (n) => checkpointLine(n, Math.min(4, 2 + Math.floor(n / 4)), -32, -(125 + n * 5 - 30)),
+    // 章 10：路径最长 + 障碍最多，毕业关 100 米路 + 7 路锥
+    roadLength: (n) => 160 + n * 6,
+    finishZ: (n) => -(135 + n * 6),
+    conesPattern: (n) => spreadObstacles(n, rampCount(n, 3, 7), -28, -(135 + n * 6 - 30)),
+    checkpointsPattern: (n) => checkpointLine(n, rampCount(n, 2, 5), -32, -(135 + n * 6 - 30)),
     difficulty: () => 5,
   },
 ];
