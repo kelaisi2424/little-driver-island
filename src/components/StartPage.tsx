@@ -1,8 +1,11 @@
-import type { GameMode } from '../types';
-import { primeVoice } from '../utils/speech';
-import CarSvg from './CarSvg';
+import { useRef, useState } from 'react';
+import type { GameMode, TaskType } from '../types';
+import { primeVoice, speak } from '../utils/speech';
+import HomeMap from './HomeMap';
+import TodayRoute from './TodayRoute';
 
 interface StartPageProps {
+  route: TaskType[];
   onStart: (mode: GameMode) => void;
   onParent: () => void;
   onStickers: () => void;
@@ -11,7 +14,15 @@ interface StartPageProps {
   dailyLimit: number;
 }
 
+const CAR_MESSAGES = [
+  '准备出发啦！',
+  '小司机坐好了吗？',
+  '安全带系好，我们出发！',
+  '今天去哪里玩呢？',
+];
+
 export default function StartPage({
+  route,
   onStart,
   onParent,
   onStickers,
@@ -19,65 +30,117 @@ export default function StartPage({
   todayCount,
   dailyLimit,
 }: StartPageProps) {
-  // 在用户首次点击时唤醒语音引擎，避免 iOS 拦截
+  const [driving, setDriving] = useState(false);
+  const [carJumping, setCarJumping] = useState(false);
+  const [carMessage, setCarMessage] = useState<string | null>(null);
+  const parentTimerRef = useRef<number | null>(null);
+
+  const clearParentTimer = () => {
+    if (parentTimerRef.current) {
+      window.clearTimeout(parentTimerRef.current);
+      parentTimerRef.current = null;
+    }
+  };
+
+  const beginParentPress = () => {
+    clearParentTimer();
+    parentTimerRef.current = window.setTimeout(() => {
+      parentTimerRef.current = null;
+      onParent();
+    }, 900);
+  };
+
+  const handleCarClick = () => {
+    if (driving) return;
+    const next = CAR_MESSAGES[Math.floor(Math.random() * CAR_MESSAGES.length)];
+    setCarMessage(next);
+    setCarJumping(true);
+    speak(next);
+    window.setTimeout(() => setCarJumping(false), 520);
+    window.setTimeout(() => setCarMessage(null), 1800);
+  };
+
+  const handleDestinationClick = (label: string) => {
+    if (driving) return;
+    const next =
+      label === '家'
+        ? '从家出发，去完成今天路线。'
+        : `${label}在这里，开车过去看看吧！`;
+    setCarMessage(next);
+    speak(next);
+    window.setTimeout(() => setCarMessage(null), 1900);
+  };
+
   const handleStart = (mode: GameMode) => {
+    if (limitReached || driving) return;
     primeVoice();
-    onStart(mode);
+    setCarMessage(mode === 'learning' ? '我会慢慢告诉你。' : '开车出发！');
+    setDriving(true);
+    window.setTimeout(() => {
+      onStart(mode);
+    }, 1050);
   };
 
   return (
-    <div className="start-page">
-      <div className="start-header">
+    <div className="start-page map-start-page">
+      <header className="map-header">
         <h1 className="start-title">小小司机任务岛</h1>
-        <p className="start-subtitle">完成安全任务，成为小小文明司机</p>
-      </div>
+        <p className="start-subtitle">今天开车去哪里呢？</p>
+      </header>
 
-      <div className="start-art">
-        <span className="sun" aria-hidden>☀️</span>
-        <span className="cloud cloud-1" aria-hidden />
-        <span className="cloud cloud-2" aria-hidden />
-        <CarSvg color="#ff8c69" size={170} />
-      </div>
+      <HomeMap
+        route={route}
+        driving={driving}
+        carJumping={carJumping}
+        carMessage={carMessage}
+        onCarClick={handleCarClick}
+        onDestinationClick={handleDestinationClick}
+        onStartClick={() => handleStart('game')}
+        startDisabled={limitReached || driving}
+      />
+
+      <TodayRoute tasks={route} />
 
       {limitReached ? (
-        <div className="limit-card">
+        <div className="limit-card home-limit">
           <span className="moon" aria-hidden>🌙</span>
           <p className="limit-text">今天已经完成任务啦，明天再来吧。</p>
           <p className="limit-sub">今天已玩 {todayCount} 局</p>
         </div>
       ) : (
-        <div className="mode-row">
+        <div className="home-actions">
           <button
-            className="btn mode-card mode-learning"
+            className="learn-soft-btn"
             onClick={() => handleStart('learning')}
+            disabled={driving}
+            type="button"
           >
-            <span className="emoji" aria-hidden>📖</span>
-            <span className="main">学习模式</span>
-            <span className="sub">边玩边学，每步都有讲解</span>
-          </button>
-          <button
-            className="btn mode-card mode-game"
-            onClick={() => handleStart('game')}
-          >
-            <span className="emoji" aria-hidden>🚗</span>
-            <span className="main">游戏模式</span>
-            <span className="sub">直接闯关</span>
+            📖 慢慢学一遍
           </button>
         </div>
       )}
 
-      <div className="start-links">
-        <button className="link-btn" onClick={onStickers}>
+      <footer className="start-links home-links">
+        <button className="link-btn" onClick={onStickers} type="button">
           🎨 我的贴纸册
         </button>
         <span className="link-divider" aria-hidden>·</span>
-        <button className="link-btn" onClick={onParent}>
+        <button
+          className="link-btn parent-hold-btn"
+          onPointerDown={beginParentPress}
+          onPointerUp={clearParentTimer}
+          onPointerCancel={clearParentTimer}
+          onPointerLeave={clearParentTimer}
+          onClick={(e) => e.preventDefault()}
+          type="button"
+          aria-label="长按进入家长设置"
+        >
           家长设置
         </button>
-      </div>
-      <p className="start-meta">
-        今天玩了 {todayCount} / {dailyLimit} 局
-      </p>
+        <span className="start-meta">
+          今天 {todayCount}/{dailyLimit} 局
+        </span>
+      </footer>
     </div>
   );
 }

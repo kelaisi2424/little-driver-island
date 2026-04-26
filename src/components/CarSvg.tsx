@@ -60,12 +60,16 @@ export default function CarSvg({
         </>
       )}
       {/* 轮胎 */}
-      <circle cx="30" cy="70" r="11" fill="#2a2a2a" />
-      <circle cx="30" cy="70" r="5" fill="#9a9a9a" />
-      <circle cx="30" cy="70" r="2" fill="#444" />
-      <circle cx="90" cy="70" r="11" fill="#2a2a2a" />
-      <circle cx="90" cy="70" r="5" fill="#9a9a9a" />
-      <circle cx="90" cy="70" r="2" fill="#444" />
+      <g className="car-wheel wheel-left">
+        <circle cx="30" cy="70" r="11" fill="#2a2a2a" />
+        <circle cx="30" cy="70" r="5" fill="#9a9a9a" />
+        <circle cx="30" cy="70" r="2" fill="#444" />
+      </g>
+      <g className="car-wheel wheel-right">
+        <circle cx="90" cy="70" r="11" fill="#2a2a2a" />
+        <circle cx="90" cy="70" r="5" fill="#9a9a9a" />
+        <circle cx="90" cy="70" r="2" fill="#444" />
+      </g>
     </svg>
   );
 }

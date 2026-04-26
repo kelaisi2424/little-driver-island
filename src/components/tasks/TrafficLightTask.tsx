@@ -21,18 +21,18 @@ const ANSWERS: Record<Light, Action> = {
 
 const HINTS: Record<Light, string> = {
   red: '再想想，红灯要停下来哦',
-  yellow: '黄灯要等一等哦',
-  green: '绿灯就可以前进啦',
+  yellow: '黄灯亮了，先等一等哦',
+  green: '绿灯亮了，可以往前开啦',
 };
 
 const SUCCESS_DETAIL: Record<Light, string> = {
   red: '红灯亮了，就要停下来。',
-  yellow: '黄灯亮了，要慢一慢，等一等。',
-  green: '绿灯亮了，可以安全地往前走啦！',
+  yellow: '黄灯亮了，要慢一点，等一等。',
+  green: '绿灯亮了，可以安全地往前开啦！',
 };
 
 const LEARNING_INTRO =
-  '看，这是红绿灯。红灯亮要停下来，黄灯亮要等一等，绿灯亮才能往前走。';
+  '看，这是红绿灯。红灯停下来，黄灯等一等，绿灯才能往前开。';
 
 const LIGHTS: Light[] = ['red', 'yellow', 'green'];
 
@@ -52,7 +52,7 @@ export default function TrafficLightTask({ onComplete, mode }: TaskComponentProp
   }, []);
 
   useEffect(() => {
-    if (phase === 'play') speak('看看，是什么灯？');
+    if (phase === 'play') speak('看看是什么灯？');
   }, [phase]);
 
   const showHint = (text: string) => {
@@ -102,26 +102,26 @@ export default function TrafficLightTask({ onComplete, mode }: TaskComponentProp
         <button
           className="action-btn stop"
           onClick={() => handleAction('stop')}
-          aria-label="停下"
+          aria-label="停下来"
         >
           <span className="icon" aria-hidden>🛑</span>
-          停下
+          停下来
         </button>
         <button
           className="action-btn wait"
           onClick={() => handleAction('wait')}
-          aria-label="等等"
+          aria-label="等一等"
         >
           <span className="icon" aria-hidden>⏸️</span>
-          等等
+          等一等
         </button>
         <button
           className="action-btn go"
           onClick={() => handleAction('go')}
-          aria-label="前进"
+          aria-label="往前开"
         >
           <span className="icon" aria-hidden>🚗</span>
-          前进
+          往前开
         </button>
       </div>
 

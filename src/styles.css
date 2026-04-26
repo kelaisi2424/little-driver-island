@@ -1117,3 +1117,2524 @@ button {
 .voice-toggle input:disabled {
   opacity: 0.5;
 }
+
+/* ---------------- 汽车乐园地图首页 --------------------------------- */
+
+.map-start-page {
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+  gap: 10px;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.map-header {
+  width: 100%;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.map-start-page .start-title {
+  font-size: 27px;
+  line-height: 1.1;
+  letter-spacing: 0;
+  margin: 0 0 4px;
+  color: #ff684d;
+}
+
+.map-start-page .start-subtitle {
+  font-size: 17px;
+  margin: 0;
+  color: #5d6b3f;
+}
+
+.home-map {
+  width: 100%;
+  height: min(58dvh, 455px);
+  min-height: 376px;
+  max-height: 455px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, #8fe4ff 0%, #c9f4ff 44%, #9adf75 45%, #80cf60 100%);
+  box-shadow: inset 0 -10px 0 rgba(84, 155, 72, 0.15), 0 6px 16px var(--c-shadow);
+}
+
+.map-next-card {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #6b5a38;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  box-shadow: 0 3px 8px var(--c-shadow);
+}
+
+.map-sky,
+.map-grass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.map-sun {
+  position: absolute;
+  top: 14px;
+  right: 20px;
+  font-size: 38px;
+  filter: drop-shadow(0 3px 0 rgba(255, 255, 255, 0.45));
+}
+
+.map-cloud {
+  position: absolute;
+  width: 66px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.map-cloud::before,
+.map-cloud::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+}
+
+.map-cloud::before {
+  width: 28px;
+  height: 28px;
+  left: 10px;
+  top: -13px;
+}
+
+.map-cloud::after {
+  width: 22px;
+  height: 22px;
+  right: 12px;
+  top: -9px;
+}
+
+.cloud-a {
+  top: 42px;
+  left: 22px;
+  animation: cloud-drift 7s ease-in-out infinite;
+}
+
+.cloud-b {
+  top: 92px;
+  right: 76px;
+  transform: scale(0.82);
+  animation: cloud-drift 8s ease-in-out infinite reverse;
+}
+
+@keyframes cloud-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(12px); }
+}
+
+.road-path {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.road-path-main,
+.road-path-shadow,
+.road-path-dash {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.road-path-shadow {
+  stroke: rgba(54, 75, 68, 0.22);
+  stroke-width: 58;
+  transform: translateY(5px);
+}
+
+.road-path-main {
+  stroke: #6c7474;
+  stroke-width: 48;
+}
+
+.road-path-dash {
+  stroke: #fff4a9;
+  stroke-width: 5;
+  stroke-dasharray: 18 20;
+}
+
+.map-home,
+.map-destination {
+  position: absolute;
+  min-width: 56px;
+  min-height: 48px;
+  padding: 5px 8px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.09);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  font-family: inherit;
+  font-weight: 800;
+}
+
+.map-home:active,
+.map-destination:active {
+  transform: translateY(3px) scale(0.97);
+}
+
+.map-home {
+  left: 13px;
+  bottom: 16px;
+  color: #7d4d35;
+}
+
+.map-home span,
+.dest-icon {
+  font-size: 25px;
+  line-height: 1;
+}
+
+.map-home b,
+.dest-label {
+  font-size: 12px;
+  line-height: 1.1;
+  color: var(--c-text);
+  white-space: nowrap;
+}
+
+.map-destination.active {
+  border-color: #ffcf54;
+  box-shadow: 0 0 0 4px rgba(255, 207, 84, 0.26), 0 5px 12px rgba(0, 0, 0, 0.12);
+  animation: dest-soft-pulse 1.8s ease-in-out infinite;
+}
+
+.map-destination.active::after {
+  content: '下一站';
+  position: absolute;
+  left: 50%;
+  bottom: -19px;
+  transform: translateX(-50%);
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #ffcf54;
+  color: #6a4b14;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+@keyframes dest-soft-pulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.slot-school { top: 28px; left: 44%; }
+.slot-wash { top: 34%; right: 18px; }
+.slot-parking { top: 47%; left: 18px; }
+.slot-park { bottom: 42px; right: 24px; }
+.slot-light { top: 122px; left: 30%; }
+
+.dest-school { background: #fff3b6; }
+.dest-wash { background: #d9fbff; }
+.dest-parking { background: #e6efff; }
+.dest-park { background: #dff8c7; }
+.dest-light { background: #fff0ef; }
+.dest-crosswalk { background: #fff7dc; }
+
+.flower,
+.bush {
+  position: absolute;
+  color: #fff6a6;
+}
+
+.flower-a { left: 22px; bottom: 88px; }
+.flower-b { right: 92px; bottom: 26px; color: #ffd6e2; }
+.bush {
+  width: 42px;
+  height: 20px;
+  border-radius: 999px 999px 8px 8px;
+  background: #4fab58;
+}
+.bush-a { left: 88px; bottom: 28px; }
+.bush-b { right: 18px; bottom: 106px; transform: scale(0.8); }
+
+.map-car-wrap {
+  position: absolute;
+  left: 42px;
+  bottom: 42px;
+  width: 160px;
+  z-index: 8;
+  transform-origin: center bottom;
+}
+
+.map-car-wrap.is-driving {
+  animation: map-car-drive 1.05s ease-in-out forwards;
+}
+
+@keyframes map-car-drive {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  35% { transform: translate(82px, -54px) rotate(8deg); }
+  70% { transform: translate(138px, -126px) rotate(-8deg); }
+  100% { transform: translate(222px, -204px) rotate(4deg); }
+}
+
+.map-start-sign {
+  position: absolute;
+  right: 16px;
+  bottom: 18px;
+  z-index: 14;
+  min-width: 132px;
+  min-height: 58px;
+  padding: 10px 16px;
+  border-radius: 18px;
+  background: #ff8c69;
+  color: white;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 6px 0 #d96a4a, 0 8px 14px rgba(0, 0, 0, 0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  animation: sign-breathe 2s ease-in-out infinite;
+}
+
+.map-start-sign::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: -16px;
+  height: 16px;
+  border-radius: 0 0 8px 8px;
+  background: #9d6b42;
+  z-index: -1;
+}
+
+.map-start-sign:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #d96a4a, 0 4px 9px rgba(0, 0, 0, 0.14);
+}
+
+.map-start-sign:disabled {
+  opacity: 0.72;
+}
+
+@keyframes sign-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.cute-car {
+  min-width: 144px;
+  min-height: 104px;
+  padding: 0;
+  background: transparent;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 8px 7px rgba(70, 82, 55, 0.25));
+  animation: car-idle 2.4s ease-in-out infinite;
+}
+
+.cute-car.is-jumping {
+  animation: car-hop 0.48s ease-out;
+}
+
+.cute-car.is-driving {
+  animation: car-drive-bob 0.28s linear infinite;
+}
+
+.cute-car.is-driving .car-wheel {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: wheel-spin 0.35s linear infinite;
+}
+
+.car-light {
+  position: absolute;
+  right: 12px;
+  top: 43px;
+  width: 22px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 245, 158, 0.75);
+  filter: blur(4px);
+  animation: light-wink 2.8s ease-in-out infinite;
+}
+
+@keyframes car-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes car-hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-18px) scale(1.04); }
+}
+
+@keyframes car-drive-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes wheel-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes light-wink {
+  0%, 78%, 100% { opacity: 0; }
+  84%, 92% { opacity: 1; }
+}
+
+.car-bubble {
+  position: absolute;
+  left: 38px;
+  bottom: 104px;
+  min-width: 150px;
+  max-width: 220px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: white;
+  color: #5f4a31;
+  font-size: 15px;
+  line-height: 1.35;
+  box-shadow: 0 5px 12px var(--c-shadow);
+  z-index: 12;
+  animation: bubble-pop 0.22s ease-out;
+}
+
+.car-bubble::after {
+  content: '';
+  position: absolute;
+  left: 28px;
+  bottom: -8px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  transform: rotate(45deg);
+}
+
+@keyframes bubble-pop {
+  from { transform: translateY(8px) scale(0.92); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.today-route {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.84);
+  border-radius: 18px;
+  padding: 10px 12px 11px;
+  box-shadow: 0 4px 10px var(--c-shadow);
+  text-align: left;
+}
+
+.route-title {
+  font-size: 14px;
+  color: #7b6b55;
+  margin-bottom: 7px;
+}
+
+.route-stops {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.route-stop {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #fff7cf;
+  color: #5d4a2a;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.route-stop + .route-stop::before {
+  content: '→';
+  margin-right: 6px;
+  color: #89a957;
+}
+
+.home-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.learn-soft-btn {
+  min-width: 160px;
+  min-height: 50px;
+  border-radius: 18px;
+  background: #fff7cf;
+  color: #6a5530;
+  font-size: 15px;
+  line-height: 1.2;
+  box-shadow: 0 5px 0 #e4c96a, 0 7px 12px var(--c-shadow);
+}
+
+.learn-soft-btn:disabled {
+  opacity: 0.72;
+}
+
+.home-links {
+  flex-wrap: wrap;
+  margin-top: 0;
+  gap: 4px 8px;
+  padding-bottom: 2px;
+}
+
+.parent-hold-btn::after {
+  content: '长按';
+  margin-left: 4px;
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.home-links .start-meta {
+  width: 100%;
+  font-size: 12px;
+}
+
+.home-limit {
+  padding: 14px 16px;
+}
+
+.home-limit .moon {
+  font-size: 30px;
+  margin-bottom: 4px;
+}
+
+.station-intro {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 92px;
+  z-index: 40;
+  min-height: 84px;
+  padding: 18px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--c-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  font-size: 20px;
+  line-height: 1.35;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+  animation: station-pop 0.28s ease-out;
+}
+
+.station-intro span {
+  font-size: 32px;
+  flex: 0 0 auto;
+}
+
+@keyframes station-pop {
+  from { transform: translateY(-10px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.progress-stars .filled {
+  animation: star-fly-in 0.45s ease-out;
+}
+
+.color-task::before,
+.color-task::after {
+  content: '';
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(173, 239, 255, 0.8);
+  background: rgba(255, 255, 255, 0.38);
+  pointer-events: none;
+  animation: wash-bubble 3.2s ease-in-out infinite;
+}
+
+.color-task::before {
+  right: 28px;
+  top: 92px;
+}
+
+.color-task::after {
+  left: 38px;
+  top: 138px;
+  width: 20px;
+  height: 20px;
+  animation-delay: 0.8s;
+}
+
+.parking-spot.target {
+  animation: parking-soft-pop 1.8s ease-in-out infinite;
+}
+
+.tl-light.on-red,
+.tl-light.on-yellow,
+.tl-light.on-green {
+  animation: light-soft-glow 1.2s ease-in-out infinite;
+}
+
+@keyframes wash-bubble {
+  0%, 100% { transform: translateY(0) scale(0.92); opacity: 0.45; }
+  50% { transform: translateY(-18px) scale(1.08); opacity: 0.9; }
+}
+
+@keyframes parking-soft-pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes light-soft-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.14); }
+}
+
+@keyframes star-fly-in {
+  from { transform: translateY(14px) scale(0.4); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@media (max-height: 820px) {
+  .home-map {
+    height: 51dvh;
+    min-height: 344px;
+  }
+
+  .map-start-page {
+    gap: 8px;
+  }
+
+  .today-route {
+    padding: 8px 10px;
+  }
+
+  .route-title {
+    margin-bottom: 5px;
+  }
+
+  .learn-soft-btn {
+    min-height: 58px;
+  }
+}
+
+/* ---------------- 小小汽车游戏盒 ------------------------------------ */
+
+.game-box-home {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(14px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #8fe4ff 0%, #c9f7ff 28%, #9ada75 29%, #7dca5f 100%);
+  overflow: hidden;
+}
+
+.game-box-header {
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.game-box-header h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.15;
+  color: #ff684d;
+  text-shadow: 2px 2px 0 white;
+}
+
+.game-box-header p {
+  margin: 4px 0 8px;
+  color: #5d6b3f;
+  font-size: 16px;
+}
+
+.game-card-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  overflow-y: auto;
+  padding: 4px 0 8px;
+}
+
+.game-box-card {
+  min-height: 150px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.72)),
+    var(--card-color);
+  border: 4px solid rgba(255,255,255,0.72);
+  box-shadow: 0 7px 0 rgba(78, 98, 70, 0.18), 0 9px 15px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #4a3a3a;
+  padding: 10px;
+  text-align: center;
+}
+
+.game-box-card:active {
+  transform: translateY(4px);
+  box-shadow: 0 3px 0 rgba(78, 98, 70, 0.18), 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.game-box-card:disabled {
+  filter: grayscale(0.8);
+  opacity: 0.65;
+}
+
+.game-card-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: var(--card-color);
+  font-size: 34px;
+  box-shadow: inset 0 -7px 0 rgba(0,0,0,0.12);
+}
+
+.game-card-title {
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.game-card-subtitle {
+  min-height: 30px;
+  font-size: 12px;
+  line-height: 1.25;
+  color: #6a5a4a;
+}
+
+.game-card-start {
+  min-width: 68px;
+  min-height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #ff8c69;
+  color: white;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.game-box-footer {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.game-box-footer button {
+  min-height: 44px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.85);
+  color: #5d5a42;
+  font-size: 13px;
+  box-shadow: 0 3px 0 rgba(139,149,103,0.25);
+}
+
+.game-box-footer span {
+  grid-column: 1 / -1;
+  color: #5d6b3f;
+  font-size: 12px;
+  text-align: center;
+}
+
+.game-box-notice,
+.game-box-limit {
+  margin: 4px 0 8px;
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255,247,207,0.95);
+  color: #6a5530;
+  font-size: 14px;
+}
+
+.game-exit-btn {
+  position: absolute;
+  left: 14px;
+  top: calc(12px + env(safe-area-inset-top));
+  z-index: 80;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #6a5a4a;
+  font-size: 22px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 rgba(139, 149, 103, 0.24), 0 6px 12px rgba(0,0,0,0.12);
+}
+
+.game-exit-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(139, 149, 103, 0.24), 0 3px 8px rgba(0,0,0,0.12);
+}
+
+.result-page {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: linear-gradient(180deg, #8fe4ff, #c9f7ff 36%, #93d970 37%, #7dca5f);
+}
+
+.result-card {
+  width: min(100%, 390px);
+  border-radius: 28px;
+  background: rgba(255,255,255,0.92);
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.18);
+}
+
+.result-emoji {
+  font-size: 58px;
+}
+
+.result-card h1 {
+  margin: 4px 0 8px;
+  color: #ff684d;
+  font-size: 30px;
+}
+
+.result-stars {
+  font-size: 34px;
+  min-height: 44px;
+}
+
+.result-sticker {
+  margin: 12px 0;
+}
+
+.result-sticker span,
+.sticker-emoji {
+  width: 70px;
+  height: 70px;
+  border-radius: 22px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 38px;
+  box-shadow: inset 0 -8px 0 rgba(0,0,0,0.12);
+}
+
+.result-sticker p,
+.result-reminder,
+.result-limit {
+  color: #6a5a4a;
+  line-height: 1.45;
+}
+
+.result-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.mini-game,
+.mini-runner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #91e5ff 0%, #c9f7ff 32%, #91d86c 33%, #77c65d 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.mini-top {
+  flex: 0 0 auto;
+  min-height: 48px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.82);
+  color: #ff684d;
+  font-size: 18px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.mini-hint {
+  flex: 0 0 auto;
+  min-height: 42px;
+  margin: 9px 4px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(255,247,207,0.94);
+  color: #6a5530;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.mini-hint.small {
+  font-size: 14px;
+  min-height: 34px;
+}
+
+.obstacle-item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 14;
+  font-size: 44px;
+}
+
+.parking-board {
+  flex: 1;
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.35);
+}
+
+.parking-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.parking-tile {
+  border-radius: 18px;
+  background: #6c7474;
+  display: grid;
+  place-items: center;
+  color: #ffe36d;
+  font-size: 34px;
+  border: 4px solid rgba(255,255,255,0.28);
+}
+
+.parking-tile.target {
+  border-style: dashed;
+  border-color: #ffe36d;
+}
+
+.parking-tile strong {
+  font-size: 48px;
+}
+
+.move-pad {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.move-pad button,
+.mini-primary {
+  min-height: 60px;
+  border-radius: 18px;
+  background: #ff8c69;
+  color: white;
+  font-size: 26px;
+  box-shadow: 0 5px 0 #d96a4a;
+}
+
+.traffic-mini {
+  align-items: center;
+}
+
+.big-traffic {
+  width: 112px;
+  min-height: 276px;
+  padding: 16px;
+  border-radius: 28px;
+  background: #303536;
+  display: grid;
+  gap: 14px;
+  box-shadow: 0 9px 0 rgba(0,0,0,0.22);
+  margin: 18px 0 12px;
+}
+
+.big-traffic span {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #555;
+}
+
+.big-traffic .red { background: #ff6b6b; box-shadow: 0 0 22px #ff6b6b; }
+.big-traffic .yellow { background: #ffd700; box-shadow: 0 0 22px #ffd700; }
+.big-traffic .green { background: #5cd684; box-shadow: 0 0 22px #5cd684; }
+
+.traffic-buttons {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.traffic-buttons button {
+  min-height: 86px;
+  border-radius: 20px;
+  background: white;
+  color: #4a3a3a;
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 5px 0 #e2d6c6;
+}
+
+.traffic-buttons span {
+  display: block;
+  font-size: 30px;
+  margin-bottom: 3px;
+}
+
+.wash-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  align-content: center;
+}
+
+.wash-grid button {
+  min-height: 150px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.78);
+  box-shadow: 0 6px 0 rgba(92, 120, 110, 0.18);
+}
+
+.bubble-layer {
+  position: absolute;
+  inset: 25% 0 auto;
+  text-align: center;
+  font-size: 46px;
+  animation: bubble-pop 0.45s ease-out;
+}
+
+.bus-road {
+  flex: 1;
+  border-radius: 24px;
+  margin: 8px 0;
+  background: linear-gradient(90deg, #7dca5f 0 28%, #6c7474 28% 72%, #7dca5f 72%);
+  position: relative;
+  overflow: hidden;
+}
+
+.bus-body {
+  position: absolute;
+  left: 12%;
+  bottom: 28%;
+  font-size: 82px;
+  animation: bus-bob 1.2s ease-in-out infinite;
+}
+
+.school-stop {
+  position: absolute;
+  right: 12%;
+  top: 20%;
+  font-size: 64px;
+}
+
+@keyframes bus-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.kid-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+}
+
+.kid-row button {
+  min-height: 62px;
+  border-radius: 18px;
+  background: white;
+  font-size: 30px;
+  box-shadow: 0 4px 0 #e2d6c6;
+}
+
+.kid-row .on-bus {
+  background: #fff7cf;
+  transform: translateY(-4px);
+}
+
+.repair-stage {
+  flex: 1;
+  position: relative;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.42);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.part-target {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255,247,207,0.9);
+  border: 3px dashed #ffb06b;
+  color: #ff8c69;
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.part-target.filled {
+  border-style: solid;
+  background: #e9faed;
+  color: #3eaa61;
+}
+
+.parts-row {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.parts-row button {
+  min-height: 76px;
+  border-radius: 18px;
+  background: white;
+  color: #4a3a3a;
+  font-size: 12px;
+  box-shadow: 0 4px 0 #e2d6c6;
+}
+
+.parts-row button span {
+  display: block;
+  font-size: 28px;
+}
+
+.parts-row .used {
+  opacity: 0.45;
+}
+
+.sticker-emoji {
+  margin: 4px 0;
+}
+
+@media (max-height: 820px) {
+  .game-box-card {
+    min-height: 132px;
+  }
+
+  .game-card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 30px;
+  }
+
+  .game-card-subtitle {
+    display: none;
+  }
+
+  .big-traffic {
+    min-height: 230px;
+  }
+
+  .big-traffic span {
+    width: 68px;
+    height: 68px;
+  }
+}
+
+@media (max-width: 380px) {
+  .map-start-page {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .map-start-page .start-title {
+    font-size: 25px;
+  }
+
+  .route-stop {
+    font-size: 12px;
+    padding: 6px 7px;
+  }
+
+  .learn-soft-btn {
+    min-height: 50px;
+  }
+
+  .map-start-sign {
+    min-width: 118px;
+    font-size: 16px;
+    right: 12px;
+  }
+}
+
+/* ---------------- 竖屏汽车闯关：封面与驾驶关卡 ------------------------ */
+
+.drive-home {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: calc(18px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #87e2ff 0%, #c7f6ff 42%, #90d86c 43%, #78c85e 100%);
+  overflow: hidden;
+  text-align: center;
+}
+
+.drive-home-top h1 {
+  margin: 6px 0 6px;
+  font-size: 31px;
+  line-height: 1.15;
+  color: #ff684d;
+  text-shadow: 2px 2px 0 white;
+}
+
+.drive-home-top p {
+  margin: 0;
+  color: #5d6b3f;
+  font-size: 15px;
+}
+
+.drive-cover-road {
+  flex: 1;
+  min-height: 390px;
+  position: relative;
+  margin: 12px 0 16px;
+  border-radius: 28px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, transparent 0 28%, #6c7474 28% 72%, transparent 72%),
+    linear-gradient(180deg, #8fe4ff 0%, #c8f7ff 38%, #8bd56a 39%, #75c45d 100%);
+  box-shadow: inset 0 -10px 0 rgba(72, 136, 62, 0.16), 0 8px 18px rgba(0,0,0,0.12);
+}
+
+.drive-cover-road::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 5px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(180deg, #fff5a0 0 28px, transparent 28px 54px);
+}
+
+.cover-sun {
+  position: absolute;
+  right: 22px;
+  top: 18px;
+  font-size: 44px;
+  animation: soft-spin 20s linear infinite;
+}
+
+.cover-cloud {
+  position: absolute;
+  width: 72px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.9);
+  animation: game-cloud-drift 7s ease-in-out infinite;
+}
+
+.cover-cloud::before,
+.cover-cloud::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+}
+
+.cover-cloud::before {
+  width: 32px;
+  height: 32px;
+  top: -15px;
+  left: 10px;
+}
+
+.cover-cloud::after {
+  width: 24px;
+  height: 24px;
+  top: -9px;
+  right: 12px;
+}
+
+.cover-cloud.one { left: 18px; top: 42px; }
+.cover-cloud.two { left: 54%; top: 104px; transform: scale(0.82); animation-delay: 1s; }
+.cover-light { position: absolute; left: 18px; top: 138px; font-size: 50px; }
+.cover-sign { position: absolute; right: 24px; bottom: 135px; font-size: 48px; }
+
+.cover-car {
+  position: absolute;
+  left: 50%;
+  bottom: 64px;
+  transform: translateX(-50%);
+  z-index: 3;
+  filter: drop-shadow(0 12px 10px rgba(45, 64, 40, 0.25));
+  animation: cover-car-ready 1.8s ease-in-out infinite;
+}
+
+.cover-car .car-wheel {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: wheel-spin 0.8s linear infinite;
+}
+
+@keyframes cover-car-ready {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+
+.drive-start-btn {
+  min-height: 72px;
+  border-radius: 26px;
+  background: #ff8c69;
+  color: white;
+  font-size: 24px;
+  font-weight: 900;
+  box-shadow: 0 7px 0 #d96a4a, 0 10px 18px rgba(0,0,0,0.13);
+}
+
+.drive-start-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 3px 0 #d96a4a, 0 6px 12px rgba(0,0,0,0.12);
+}
+
+.home-limit-message {
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.85);
+  color: #6a5a4a;
+  font-size: 17px;
+  line-height: 1.4;
+  padding: 12px 16px;
+}
+
+.drive-home-links {
+  min-height: 48px;
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.drive-home-links button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.78);
+  color: #5d5a42;
+  font-size: 14px;
+  box-shadow: 0 3px 0 rgba(139,149,103,0.25);
+}
+
+.driving-game {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(8px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #8fe4ff 0%, #bdf4ff 35%, #8bd56a 36%, #74c45d 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.runner-hud {
+  flex: 0 0 auto;
+  min-height: 52px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.8);
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.09);
+  z-index: 5;
+}
+
+.runner-hud strong {
+  display: block;
+  color: #ff684d;
+  font-size: 16px;
+  line-height: 1.15;
+}
+
+.runner-hud span {
+  display: block;
+  color: #5d6b3f;
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.runner-stars {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  letter-spacing: -3px;
+}
+
+.runner-hint {
+  flex: 0 0 auto;
+  min-height: 42px;
+  margin: 7px 6px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: rgba(255, 247, 207, 0.92);
+  color: #6a5530;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  z-index: 4;
+}
+
+.runner-road-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #82ce62;
+  touch-action: none;
+  box-shadow: inset 0 -10px 0 rgba(64, 124, 54, 0.18);
+}
+
+.runner-road {
+  position: absolute;
+  top: -20px;
+  bottom: -20px;
+  left: 50%;
+  width: 54%;
+  transform: translateX(-50%);
+  border-radius: 34px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent calc(46px + var(--road-offset)),
+      #fff5a0 calc(46px + var(--road-offset)),
+      #fff5a0 calc(76px + var(--road-offset)),
+      transparent calc(76px + var(--road-offset)),
+      transparent calc(112px + var(--road-offset))
+    ),
+    #6c7474;
+  border-left: 5px solid rgba(255,255,255,0.2);
+  border-right: 5px solid rgba(255,255,255,0.2);
+  box-shadow: 0 0 0 6px rgba(80, 98, 80, 0.18);
+}
+
+.speed-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.speed-lines span {
+  position: absolute;
+  left: 50%;
+  width: 4px;
+  height: 42px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  animation: speed-line-drop 0.72s linear infinite;
+}
+
+.speed-lines span:nth-child(1) { margin-left: -82px; animation-delay: 0s; }
+.speed-lines span:nth-child(2) { margin-left: 78px; animation-delay: 0.18s; }
+.speed-lines span:nth-child(3) { margin-left: -54px; animation-delay: 0.36s; }
+.speed-lines span:nth-child(4) { margin-left: 48px; animation-delay: 0.54s; }
+
+@keyframes speed-line-drop {
+  from { top: -52px; opacity: 0; }
+  20% { opacity: 0.75; }
+  to { top: 108%; opacity: 0; }
+}
+
+.runner-grass {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 23%;
+  pointer-events: none;
+}
+
+.runner-grass.left { left: 0; }
+.runner-grass.right { right: 0; }
+
+.runner-grass span {
+  position: absolute;
+  font-size: 25px;
+  animation: roadside-scroll 3.8s linear infinite;
+}
+
+.runner-grass span:nth-child(1) { left: 20%; top: 5%; }
+.runner-grass span:nth-child(2) { left: 55%; top: 42%; animation-delay: 1.1s; }
+.runner-grass span:nth-child(3) { left: 28%; top: 75%; animation-delay: 2.1s; }
+
+@keyframes roadside-scroll {
+  from { transform: translateY(-60px); }
+  to { transform: translateY(120px); }
+}
+
+.runner-car {
+  position: absolute;
+  bottom: 15%;
+  width: 128px;
+  height: 92px;
+  transform: translateX(-50%);
+  z-index: 12;
+  filter: drop-shadow(0 11px 9px rgba(40, 62, 42, 0.27));
+  transition: left 0.08s linear;
+  pointer-events: none;
+}
+
+.runner-car.dragging .car-wheel,
+.runner-car .car-wheel {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: wheel-spin 0.42s linear infinite;
+}
+
+.runner-car.bumping {
+  animation: runner-bump 0.38s ease-in-out;
+}
+
+@keyframes runner-bump {
+  0%, 100% { transform: translateX(-50%); }
+  25% { transform: translateX(calc(-50% - 8px)); }
+  70% { transform: translateX(calc(-50% + 8px)); }
+}
+
+.runner-light {
+  position: absolute;
+  right: 5px;
+  top: 50px;
+  width: 26px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 245, 158, 0.75);
+  filter: blur(5px);
+}
+
+.road-event {
+  position: absolute;
+  left: 50%;
+  width: 58%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.runner-traffic {
+  width: 72px;
+  min-height: 170px;
+  padding: 10px;
+  border-radius: 18px;
+  background: #2f3333;
+  display: grid;
+  gap: 9px;
+  box-shadow: 0 7px 0 rgba(0,0,0,0.2);
+}
+
+.runner-traffic span {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #555;
+}
+
+.runner-traffic .red { background: #ff6b6b; box-shadow: 0 0 18px #ff6b6b; }
+.runner-traffic .green { background: #5cd684; box-shadow: 0 0 18px #5cd684; }
+
+.lane-event,
+.garage-event {
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.lane-gate {
+  width: 30%;
+  min-height: 86px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.86);
+  border: 4px dashed #ffe36d;
+  color: #5d4a2a;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.12);
+}
+
+.lane-gate span {
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.lane-gate small {
+  display: none;
+}
+
+.lane-gate.target {
+  box-shadow: 0 0 0 7px rgba(255, 227, 109, 0.25), 0 5px 0 rgba(0,0,0,0.12);
+}
+
+.garage-gate {
+  width: 24%;
+  min-height: 92px;
+  border-radius: 18px 18px 8px 8px;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 -10px 0 rgba(0,0,0,0.12), 0 6px 0 rgba(0,0,0,0.13);
+  border: 4px solid rgba(255,255,255,0.75);
+}
+
+.garage-gate span {
+  font-size: 26px;
+  animation: wash-bubble 2.2s ease-in-out infinite;
+}
+
+.crosswalk-event {
+  width: 62%;
+}
+
+.runner-zebra {
+  width: 100%;
+  height: 72px;
+  border-radius: 12px;
+  background: repeating-linear-gradient(90deg, white 0 14px, transparent 14px 24px);
+}
+
+.walker {
+  position: absolute;
+  right: 10px;
+  top: -16px;
+  font-size: 44px;
+  animation: walk-bob 1s ease-in-out infinite;
+}
+
+.block-event {
+  justify-content: center;
+  gap: 4px;
+  width: 34%;
+  font-size: 44px;
+}
+
+.block-event small {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #ffd166;
+  color: #6a4b14;
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.14);
+}
+
+.finish-parking {
+  width: 120px;
+  height: 130px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: #4f5857;
+  border: 6px dashed #ffe36d;
+  color: #ffe36d;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.18);
+}
+
+.finish-parking strong {
+  font-size: 70px;
+}
+
+.runner-target-color {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  min-width: 92px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: white;
+  font-size: 17px;
+  font-weight: 900;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+  z-index: 14;
+  display: grid;
+  place-items: center;
+}
+
+.drive-feedback {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  z-index: 22;
+  min-width: 132px;
+  min-height: 54px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
+  pointer-events: none;
+  animation: drive-feedback-pop 0.72s ease-out forwards;
+}
+
+.drive-feedback.good {
+  background: #5cd684;
+  box-shadow: 0 0 0 8px rgba(92, 214, 132, 0.22), 0 8px 18px rgba(0,0,0,0.16);
+}
+
+.drive-feedback.careful {
+  background: #ffd166;
+  color: #684d14;
+  text-shadow: none;
+  box-shadow: 0 0 0 8px rgba(255, 209, 102, 0.24), 0 8px 18px rgba(0,0,0,0.14);
+}
+
+@keyframes drive-feedback-pop {
+  0% { transform: translate(-50%, -42%) scale(0.7); opacity: 0; }
+  25% { opacity: 1; }
+  70% { transform: translate(-50%, -55%) scale(1.04); opacity: 1; }
+  100% { transform: translate(-50%, -70%) scale(0.96); opacity: 0; }
+}
+
+.choice-popup,
+.finish-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(35, 52, 45, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.choice-card,
+.finish-panel {
+  width: min(100%, 360px);
+  border-radius: 26px;
+  background: #fffaf0;
+  border: 4px solid white;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.24);
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.choice-card h2,
+.finish-panel h2 {
+  margin: 0 0 14px;
+  color: #ff684d;
+  font-size: 25px;
+}
+
+.choice-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.choice-buttons button {
+  min-height: 76px;
+  border-radius: 20px;
+  background: #ff8c69;
+  color: white;
+  font-size: 20px;
+  font-weight: 900;
+  box-shadow: 0 6px 0 #d96a4a;
+}
+
+.choice-card p {
+  margin: 12px 0 0;
+  color: #6a5a4a;
+  font-size: 15px;
+}
+
+.finish-panel {
+  inset: auto 18px 28%;
+  margin: 0 auto;
+  display: block;
+}
+
+.finish-panel p {
+  margin: 4px 0 12px;
+  color: #6a5a4a;
+  font-size: 17px;
+}
+
+.finish-panel div {
+  font-size: 34px;
+}
+
+@media (max-height: 820px) {
+  .drive-cover-road {
+    min-height: 330px;
+  }
+
+  .cover-car svg {
+    width: 160px;
+  }
+
+  .runner-hint {
+    min-height: 38px;
+    font-size: 15px;
+    margin: 6px;
+  }
+
+  .runner-car {
+    bottom: 12%;
+  }
+}
+
+/* ---------------- 小游戏主场景：小小司机汽车城 ------------------------ */
+
+.game-world {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: calc(9px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #8fe4ff 0%, #bff4ff 42%, #92d86f 43%, #78c65d 100%);
+}
+
+.game-hud {
+  flex: 0 0 auto;
+  min-height: 54px;
+  padding: 8px 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-shadow: 0 4px 10px rgba(70, 88, 50, 0.12);
+  z-index: 3;
+}
+
+.game-hud h1 {
+  font-size: 19px;
+  line-height: 1.1;
+  color: #ff684d;
+  margin: 0 0 3px;
+  text-shadow: 1px 1px 0 white;
+}
+
+.game-hud p,
+.hud-right span {
+  margin: 0;
+  font-size: 12px;
+  color: #5d6b3f;
+  line-height: 1.2;
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.sound-toggle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #fff7cf;
+  box-shadow: 0 3px 0 #e0c45d;
+  font-size: 20px;
+}
+
+.game-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.game-map {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 18% 78%, rgba(255, 246, 170, 0.45) 0 8%, transparent 9%),
+    linear-gradient(180deg, #8fe4ff 0%, #c9f7ff 37%, #96db74 38%, #7dcc5e 100%);
+  box-shadow: inset 0 -10px 0 rgba(74, 137, 62, 0.18), 0 8px 18px rgba(42, 68, 54, 0.16);
+  touch-action: none;
+}
+
+.game-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.game-sun {
+  position: absolute;
+  right: 18px;
+  top: 16px;
+  font-size: 42px;
+  animation: soft-spin 18s linear infinite;
+}
+
+@keyframes soft-spin {
+  to { transform: rotate(360deg); }
+}
+
+.game-cloud {
+  position: absolute;
+  width: 70px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  animation: game-cloud-drift 8s ease-in-out infinite;
+}
+
+.game-cloud::before,
+.game-cloud::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+}
+
+.game-cloud::before {
+  width: 32px;
+  height: 32px;
+  top: -15px;
+  left: 11px;
+}
+
+.game-cloud::after {
+  width: 25px;
+  height: 25px;
+  top: -10px;
+  right: 12px;
+}
+
+.cloud-one { left: 18px; top: 44px; }
+.cloud-two { left: 45%; top: 96px; transform: scale(0.8); animation-delay: 1.4s; }
+
+@keyframes game-cloud-drift {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 14px 0; }
+}
+
+.game-road {
+  position: absolute;
+  background: #6d7776;
+  box-shadow: inset 0 0 0 5px rgba(255,255,255,0.13), 0 6px 0 rgba(40, 62, 55, 0.18);
+}
+
+.game-road::after {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 4px;
+  translate: 0 -50%;
+  background: repeating-linear-gradient(90deg, #fff5a0 0 18px, transparent 18px 34px);
+}
+
+.road-main {
+  left: -24px;
+  right: -24px;
+  bottom: 104px;
+  height: 82px;
+  transform: rotate(-6deg);
+  border-radius: 999px;
+}
+
+.road-side {
+  width: 86px;
+  top: 94px;
+  bottom: 20px;
+  left: 46%;
+  transform: rotate(12deg);
+  border-radius: 999px;
+}
+
+.game-crosswalk {
+  position: absolute;
+  left: 50%;
+  bottom: 116px;
+  width: 74px;
+  height: 64px;
+  transform: rotate(-6deg);
+  background: repeating-linear-gradient(90deg, white 0 10px, transparent 10px 17px);
+  opacity: 0.95;
+  border-radius: 8px;
+}
+
+.game-trees {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.game-trees span {
+  position: absolute;
+  font-size: 25px;
+}
+
+.game-trees span:nth-child(1) { left: 10px; bottom: 32px; }
+.game-trees span:nth-child(2) { right: 28px; bottom: 92px; font-size: 21px; }
+.game-trees span:nth-child(3) { left: 23%; top: 22%; }
+.game-trees span:nth-child(4) { right: 28%; top: 38%; font-size: 20px; }
+
+.wash-bubbles {
+  position: absolute;
+  right: 11%;
+  top: 47%;
+  pointer-events: none;
+}
+
+.wash-bubbles span {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(213, 249, 255, 0.9);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  animation: map-bubble 2.5s ease-in-out infinite;
+}
+
+.wash-bubbles span:nth-child(2) { left: 22px; animation-delay: 0.6s; }
+.wash-bubbles span:nth-child(3) { left: -16px; animation-delay: 1.1s; }
+
+@keyframes map-bubble {
+  0%, 100% { transform: translateY(16px) scale(0.8); opacity: 0; }
+  45% { opacity: 1; }
+  100% { transform: translateY(-28px) scale(1.15); opacity: 0; }
+}
+
+.task-hotspot {
+  position: absolute;
+  translate: -50% -50%;
+  width: 86px;
+  height: 86px;
+  border-radius: 30% 36% 32% 34%;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.62);
+  border: 4px solid rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 0 rgba(88, 105, 73, 0.22), 0 11px 18px rgba(57, 78, 55, 0.18);
+  color: var(--c-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  z-index: 4;
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+
+.task-hotspot.active {
+  cursor: pointer;
+}
+
+.task-hotspot.near,
+.task-hotspot.impact,
+.task-hotspot.active:active {
+  transform: scale(1.08);
+  border-color: #ffe36d;
+  filter: brightness(1.05);
+  box-shadow: 0 0 0 7px rgba(255, 227, 109, 0.3), 0 9px 16px rgba(57, 78, 55, 0.18);
+  animation: hotspot-hop 0.8s ease-in-out infinite;
+}
+
+.task-hotspot.impact::after {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 227, 109, 0.82);
+  animation: collision-ring 0.45s ease-out forwards;
+}
+
+.task-hotspot.done {
+  background: #fff7cf;
+  opacity: 0.86;
+  box-shadow: 0 4px 0 rgba(88, 105, 73, 0.16), 0 6px 12px rgba(57, 78, 55, 0.12);
+}
+
+.hotspot-emoji {
+  font-size: 43px;
+  line-height: 1;
+}
+
+.hotspot-label {
+  position: absolute;
+  left: 50%;
+  bottom: -25px;
+  transform: translateX(-50%);
+  min-width: 58px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.task-hotspot.near .hotspot-label,
+.task-hotspot.impact .hotspot-label,
+.task-hotspot.done .hotspot-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.hotspot-light { background: #fff0ef; }
+.hotspot-parking { background: #e6efff; }
+.hotspot-wash { background: #ddfbff; }
+.hotspot-school { background: #fff3b6; }
+.hotspot-crosswalk { background: #fff7dc; }
+
+@keyframes collision-ring {
+  from { transform: scale(0.65); opacity: 1; }
+  to { transform: scale(1.45); opacity: 0; }
+}
+
+.hotspot-light .hotspot-emoji {
+  animation: traffic-wink 1.3s ease-in-out infinite;
+}
+
+.hotspot-parking .hotspot-emoji {
+  animation: sign-wiggle 2s ease-in-out infinite;
+}
+
+@keyframes hotspot-hop {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -5px; }
+}
+
+@keyframes traffic-wink {
+  0%, 100% { filter: saturate(1); }
+  50% { filter: saturate(1.4) brightness(1.08); }
+}
+
+@keyframes sign-wiggle {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(5deg); }
+}
+
+.driver-car {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 146px;
+  height: 100px;
+  padding: 0;
+  background: transparent;
+  z-index: 8;
+  touch-action: none;
+  filter: drop-shadow(0 10px 8px rgba(50, 72, 43, 0.24));
+  transition: filter 0.12s;
+}
+
+.driver-car.dragging {
+  filter: drop-shadow(0 14px 10px rgba(50, 72, 43, 0.3));
+  animation: driver-drag-bob 0.32s linear infinite;
+}
+
+.driver-car.dragging .car-wheel,
+.driver-car.celebrating .car-wheel {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: wheel-spin 0.35s linear infinite;
+}
+
+.driver-car.celebrating {
+  animation: car-celebrate 0.55s ease-out;
+}
+
+.driver-headlight {
+  position: absolute;
+  right: 8px;
+  top: 50px;
+  width: 28px;
+  height: 11px;
+  border-radius: 999px;
+  background: rgba(255, 244, 148, 0.7);
+  filter: blur(5px);
+  animation: light-wink 2.4s ease-in-out infinite;
+}
+
+@keyframes car-celebrate {
+  0%, 100% { scale: 1; }
+  45% { scale: 1.08; translate: 0 -14px; }
+}
+
+@keyframes driver-drag-bob {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -3px; }
+}
+
+.game-bubble {
+  position: absolute;
+  left: 18px;
+  top: 14px;
+  max-width: 240px;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.93);
+  color: #5a4a35;
+  font-size: 15px;
+  line-height: 1.35;
+  z-index: 12;
+  box-shadow: 0 5px 12px rgba(0,0,0,0.12);
+  animation: bubble-pop 0.22s ease-out;
+}
+
+.star-burst {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  translate: -50% -50%;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.star-burst span {
+  position: absolute;
+  font-size: 28px;
+  animation: burst-star 0.82s ease-out forwards;
+}
+
+.star-burst span:nth-child(1) { --x: -60px; --y: -50px; }
+.star-burst span:nth-child(2) { --x: 45px; --y: -62px; animation-delay: 0.04s; }
+.star-burst span:nth-child(3) { --x: -44px; --y: 34px; animation-delay: 0.07s; }
+.star-burst span:nth-child(4) { --x: 58px; --y: 32px; animation-delay: 0.1s; }
+.star-burst span:nth-child(5) { --x: 0; --y: -78px; animation-delay: 0.12s; }
+
+@keyframes burst-star {
+  from { transform: translate(0,0) scale(0.4); opacity: 0; }
+  35% { opacity: 1; }
+  to { transform: translate(var(--x), var(--y)) scale(1.05); opacity: 0; }
+}
+
+.game-footer {
+  flex: 0 0 auto;
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.25fr;
+  gap: 8px;
+  z-index: 4;
+}
+
+.game-small-btn {
+  min-height: 48px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #5d5a42;
+  font-size: 13px;
+  line-height: 1.15;
+  box-shadow: 0 4px 0 rgba(139, 149, 103, 0.25), 0 6px 10px rgba(0,0,0,0.08);
+}
+
+.game-small-btn.active {
+  background: #fff7cf;
+  color: #8a6416;
+}
+
+.remaining-pill {
+  position: absolute;
+  right: 16px;
+  top: 82px;
+  z-index: 5;
+  min-height: 34px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: rgba(255, 247, 207, 0.94);
+  color: #6a5530;
+  font-size: 13px;
+  box-shadow: 0 4px 9px rgba(0,0,0,0.1);
+}
+
+.limit-overlay,
+.task-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(35, 52, 45, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.task-modal {
+  width: min(100%, 390px);
+  border-radius: 26px;
+  background: #fffaf0;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.24);
+  border: 4px solid white;
+  padding: 18px 16px 16px;
+  text-align: center;
+  animation: pop-in 0.24s ease-out;
+}
+
+.task-modal.done {
+  animation: modal-good 0.5s ease-out;
+}
+
+@keyframes modal-good {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.035); }
+}
+
+.modal-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #ff684d;
+  margin-bottom: 10px;
+}
+
+.modal-learn,
+.modal-task-line {
+  margin: 6px 0 12px;
+  color: #6a5a4a;
+  font-size: 15px;
+}
+
+.modal-traffic {
+  width: 82px;
+  height: 198px;
+  margin: 2px auto 14px;
+  padding: 12px;
+  border-radius: 20px;
+  background: #2e3233;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+}
+
+.modal-traffic span {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #555;
+}
+
+.modal-traffic span:nth-child(1).on { background: #ff6b6b; box-shadow: 0 0 18px #ff6b6b; }
+.modal-traffic span:nth-child(2).on { background: #ffd700; box-shadow: 0 0 18px #ffd700; }
+.modal-traffic span:nth-child(3).on { background: #5cd684; box-shadow: 0 0 18px #5cd684; }
+
+.modal-choice-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.modal-choice-row.two {
+  grid-template-columns: 1fr 1fr;
+}
+
+.modal-choice,
+.modal-spot,
+.modal-car-choice {
+  min-height: 74px;
+  border-radius: 18px;
+  background: white;
+  color: var(--c-text);
+  box-shadow: 0 5px 0 #e4d7c5, 0 7px 12px rgba(0,0,0,0.08);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.modal-choice span {
+  display: block;
+  font-size: 30px;
+  margin-bottom: 4px;
+}
+
+.modal-choice.picked,
+.modal-spot.picked {
+  background: #fff7cf;
+}
+
+.modal-hint {
+  min-height: 36px;
+  margin-top: 12px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: #fff0ef;
+  color: #7b4b42;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.modal-hint.good {
+  background: #e9faed;
+  color: #3e7d4f;
+}
+
+.modal-stars {
+  font-size: 30px;
+  margin-top: 8px;
+  animation: star-bounce 0.55s ease-in-out infinite;
+}
+
+.modal-parking-lot {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  margin: 10px 0 6px;
+}
+
+.modal-spot {
+  min-width: 0;
+  min-height: 96px;
+  background: #4f5857;
+  border: 3px dashed #ffe36d;
+  color: #ffe36d;
+  font-size: 28px;
+}
+
+.modal-spot.correct {
+  background: #e9faed;
+  color: #39a45d;
+  border-color: #5cd684;
+  animation: parking-soft-pop 0.6s ease-in-out infinite;
+}
+
+.modal-car-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.modal-car-choice {
+  min-height: 104px;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-car-choice.washed::after {
+  content: '🫧';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  background: rgba(218, 250, 255, 0.35);
+  animation: bubble-pop 0.4s ease-out;
+}
+
+@media (max-height: 820px) {
+  .game-hud {
+    min-height: 48px;
+    padding: 6px 9px;
+  }
+
+  .game-hud h1 {
+    font-size: 18px;
+  }
+
+  .game-footer {
+    min-height: 46px;
+  }
+
+  .game-small-btn {
+    min-height: 44px;
+  }
+
+  .driver-car {
+    width: 136px;
+    height: 94px;
+  }
+}
+
+@media (max-width: 380px) {
+  .game-world {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .game-hud h1 {
+    font-size: 17px;
+  }
+
+  .hud-right span {
+    font-size: 11px;
+  }
+
+  .task-hotspot {
+    width: 76px;
+    height: 76px;
+  }
+
+  .hotspot-label {
+    font-size: 12px;
+  }
+
+  .game-footer {
+    gap: 6px;
+  }
+
+  .game-small-btn {
+    font-size: 12px;
+  }
+}

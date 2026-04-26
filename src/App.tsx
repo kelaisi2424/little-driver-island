@@ -1,118 +1,144 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { GameMode, ParentConfig, Screen, TaskType } from './types';
-import { randomTaskSequence } from './utils/random';
-import {
-  getTodayCount,
-  incrementPlayCount,
-  loadConfig,
-  reachedDailyLimit,
-  saveConfig,
-} from './utils/storage';
+import { useEffect, useState } from 'react';
+import type { GameCompletePayload, GameId, ParentConfig, Screen } from './types';
+import { loadConfig, saveConfig } from './utils/storage';
 import { setVoiceEnabled } from './utils/speech';
-import { awardNextSticker, type Sticker } from './utils/stickers';
-import StartPage from './components/StartPage';
-import RestPage from './components/RestPage';
+import { awardSticker, type Sticker } from './utils/stickers';
+import { useDailyLimit } from './hooks/useDailyLimit';
+import { getGameDefinition } from './data/games';
+import HomeGameBox from './components/HomeGameBox';
+import ResultPage from './components/ResultPage';
 import ParentSettings from './components/ParentSettings';
-import GamePlay from './components/GamePlay';
 import StickerBook from './components/StickerBook';
+import ObstacleDriveGame from './games/ObstacleDriveGame';
+import ParkingPuzzleGame from './games/ParkingPuzzleGame';
+import TrafficLightGame from './games/TrafficLightGame';
+import CarWashGame from './games/CarWashGame';
+import BusPickupGame from './games/BusPickupGame';
+import RepairGarageGame from './games/RepairGarageGame';
 
 const DEFAULT_CONFIG: ParentConfig = {
-  totalTasks: 5,
+  totalTasks: 4,
   reminder: '眼睛休息一下，去喝口水，看看远处吧。',
   voiceEnabled: true,
   dailyLimit: 3,
 };
 
+function normalizeConfig(config: ParentConfig): ParentConfig {
+  return {
+    ...config,
+    totalTasks: Math.min(5, Math.max(3, config.totalTasks)),
+    dailyLimit: Math.min(3, Math.max(1, config.dailyLimit)),
+  };
+}
+
 function loadInitialConfig(): ParentConfig {
-  return { ...DEFAULT_CONFIG, ...(loadConfig() ?? {}) };
+  return normalizeConfig({ ...DEFAULT_CONFIG, ...(loadConfig() ?? {}) });
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('start');
+  const [screen, setScreen] = useState<Screen>('box');
   const [config, setConfigState] = useState<ParentConfig>(loadInitialConfig);
-  const [tasks, setTasks] = useState<TaskType[]>([]);
-  const [mode, setMode] = useState<GameMode>('game');
-  const [stars, setStars] = useState(0);
+  const [activeGame, setActiveGame] = useState<GameId | null>(null);
+  const [lastResult, setLastResult] = useState<GameCompletePayload | null>(null);
   const [newSticker, setNewSticker] = useState<Sticker | null>(null);
-  const [todayCount, setTodayCount] = useState<number>(() => getTodayCount());
+  const daily = useDailyLimit(config.dailyLimit);
 
-  // 同步配置到 localStorage 与全局语音开关
   useEffect(() => {
     saveConfig(config);
     setVoiceEnabled(config.voiceEnabled);
   }, [config]);
 
-  const limitReached = useMemo(
-    () => reachedDailyLimit(config.dailyLimit),
-    [config.dailyLimit, todayCount, screen],
-  );
-
   const updateConfig = (next: ParentConfig) => {
-    setConfigState(next);
+    setConfigState(normalizeConfig(next));
   };
 
-  const handleStart = (m: GameMode) => {
-    if (reachedDailyLimit(config.dailyLimit)) return;
-    const rec = incrementPlayCount();
-    setTodayCount(rec.count);
-    setMode(m);
-    setTasks(randomTaskSequence(config.totalTasks));
-    setStars(0);
+  const startGame = (gameId: GameId) => {
+    if (daily.limitReached) return;
+    setActiveGame(gameId);
+    setLastResult(null);
     setNewSticker(null);
-    setScreen('playing');
+    setScreen('game');
   };
 
-  const handleAllComplete = (earned: number) => {
-    setStars(earned);
-    const sticker = awardNextSticker();
-    setNewSticker(sticker);
-    setScreen('rest');
+  const completeGame = (payload: GameCompletePayload) => {
+    setLastResult(payload);
+    setNewSticker(awardSticker(payload.stickerId));
+    daily.countFinishedRound();
+    setScreen('result');
+  };
+
+  const renderGame = () => {
+    const props = { onComplete: completeGame };
+    switch (activeGame) {
+      case 'obstacle-drive':
+        return <ObstacleDriveGame {...props} />;
+      case 'parking-puzzle':
+        return <ParkingPuzzleGame {...props} />;
+      case 'traffic-light':
+        return <TrafficLightGame {...props} />;
+      case 'car-wash':
+        return <CarWashGame {...props} />;
+      case 'bus-pickup':
+        return <BusPickupGame {...props} />;
+      case 'repair-garage':
+        return <RepairGarageGame {...props} />;
+      default:
+        return null;
+    }
+  };
+
+  const goBox = () => {
+    daily.refresh();
+    setScreen('box');
   };
 
   return (
     <div className="app">
-      {screen === 'start' && (
-        <StartPage
-          onStart={handleStart}
+      {screen === 'box' && (
+        <HomeGameBox
+          config={config}
+          todayCount={daily.todayCount}
+          limitReached={daily.limitReached}
+          onStartGame={startGame}
           onParent={() => setScreen('parent')}
           onStickers={() => setScreen('stickers')}
-          limitReached={limitReached}
-          todayCount={todayCount}
-          dailyLimit={config.dailyLimit}
         />
       )}
-      {screen === 'playing' && (
-        <GamePlay
-          tasks={tasks}
-          mode={mode}
-          onComplete={handleAllComplete}
-          onExit={() => setScreen('start')}
-        />
+      {screen === 'game' && (
+        <>
+          <button
+            className="game-exit-btn"
+            onClick={goBox}
+            type="button"
+            aria-label="关闭游戏，返回游戏盒"
+          >
+            ✕
+          </button>
+          {renderGame()}
+        </>
       )}
-      {screen === 'rest' && (
-        <RestPage
-          stars={stars}
-          totalTasks={config.totalTasks}
-          reminder={config.reminder}
-          newSticker={newSticker}
-          limitReached={limitReached}
-          onPlayAgain={() => handleStart(mode)}
-          onExit={() => setScreen('start')}
-          onStickers={() => setScreen('stickers')}
+      {screen === 'result' && (
+        <ResultPage
+          game={lastResult ? getGameDefinition(lastResult.gameId) ?? null : null}
+          stars={lastResult?.stars ?? 0}
+          sticker={newSticker}
+          limitReached={daily.limitReached}
+          onBack={goBox}
+          onReplay={() => {
+            daily.refresh();
+            if (activeGame && !daily.limitReached) startGame(activeGame);
+          }}
         />
       )}
       {screen === 'parent' && (
         <ParentSettings
           config={config}
           onSave={updateConfig}
-          onBack={() => {
-            setTodayCount(getTodayCount());
-            setScreen('start');
-          }}
+          onBack={goBox}
         />
       )}
       {screen === 'stickers' && (
-        <StickerBook onBack={() => setScreen('start')} />
+        <StickerBook onBack={goBox} />
       )}
     </div>
   );

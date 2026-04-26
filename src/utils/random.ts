@@ -10,6 +10,14 @@ const ALL_TASK_TYPES: TaskType[] = [
   'seatbelt',
 ];
 
+const GAME_WORLD_TASKS: TaskType[] = [
+  'traffic-light',
+  'parking',
+  'color-repair',
+  'seatbelt',
+  'crosswalk',
+];
+
 // 生成一局任务序列。尽量避免连续两次相同任务，让小朋友体验更丰富。
 export function randomTaskSequence(count: number): TaskType[] {
   const seq: TaskType[] = [];
@@ -25,6 +33,10 @@ export function randomTaskSequence(count: number): TaskType[] {
     last = candidate;
   }
   return seq;
+}
+
+export function randomGameWorldRoute(count: number): TaskType[] {
+  return shuffle(GAME_WORLD_TASKS).slice(0, Math.min(count, GAME_WORLD_TASKS.length));
 }
 
 export function pickRandom<T>(arr: readonly T[]): T {

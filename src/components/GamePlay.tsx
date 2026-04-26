@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { GameMode, TaskType } from '../types';
 import { getQuiz } from '../data/safetyQuizzes';
+import { taskToArrivalPrompt } from '../utils/routeMeta';
+import { speak } from '../utils/speech';
 import ProgressBar from './ProgressBar';
 import TrafficLightTask from './tasks/TrafficLightTask';
 import ParkingTask from './tasks/ParkingTask';
@@ -24,6 +26,17 @@ export default function GamePlay({
 }: GamePlayProps) {
   const [index, setIndex] = useState(0);
   const [stars, setStars] = useState(0);
+  const [showStationIntro, setShowStationIntro] = useState(true);
+
+  useEffect(() => {
+    const current = tasks[index];
+    if (!current) return;
+    const prompt = taskToArrivalPrompt(current);
+    setShowStationIntro(true);
+    speak(prompt);
+    const timer = window.setTimeout(() => setShowStationIntro(false), 1300);
+    return () => window.clearTimeout(timer);
+  }, [index, tasks]);
 
   const handleTaskComplete = () => {
     const nextStars = stars + 1;
@@ -74,8 +87,14 @@ export default function GamePlay({
       />
       {/* key 让任务切换时彻底重置子组件内部状态 */}
       <div className="task" key={index}>
-        {currentType && renderTask(currentType)}
+        {currentType && !showStationIntro && renderTask(currentType)}
       </div>
+      {showStationIntro && currentType && (
+        <div className="station-intro" aria-live="polite">
+          <span aria-hidden>🚗</span>
+          {taskToArrivalPrompt(currentType)}
+        </div>
+      )}
     </>
   );
 }

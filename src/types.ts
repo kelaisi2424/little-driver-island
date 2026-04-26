@@ -1,6 +1,34 @@
 // Game-wide shared types. Add new task types here when extending.
 
-export type Screen = 'start' | 'playing' | 'rest' | 'parent' | 'stickers';
+export type Screen = 'box' | 'game' | 'result' | 'parent' | 'stickers';
+
+export type GameId =
+  | 'obstacle-drive'
+  | 'parking-puzzle'
+  | 'traffic-light'
+  | 'car-wash'
+  | 'bus-pickup'
+  | 'repair-garage';
+
+export interface GameDefinition {
+  id: GameId;
+  icon: string;
+  title: string;
+  subtitle: string;
+  color: string;
+  stickerId: string;
+  learning: string;
+}
+
+export interface GameCompletePayload {
+  gameId: GameId;
+  stars: number;
+  stickerId: string;
+}
+
+export interface MiniGameProps {
+  onComplete: (payload: GameCompletePayload) => void;
+}
 
 export type GameMode = 'learning' | 'game';
 

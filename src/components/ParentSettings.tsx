@@ -9,8 +9,8 @@ interface ParentSettingsProps {
   onBack: () => void;
 }
 
-const TASK_COUNT_OPTIONS = [3, 5, 7];
-const DAILY_LIMIT_OPTIONS = [1, 3, 5];
+const TASK_COUNT_OPTIONS = [3, 4, 5];
+const DAILY_LIMIT_OPTIONS = [1, 2, 3];
 
 export default function ParentSettings({
   config,

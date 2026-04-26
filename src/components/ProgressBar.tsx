@@ -22,7 +22,7 @@ export default function ProgressBar({
         🏠
       </button>
       <div className="progress-text">
-        任务 {current}/{total}
+        第 {current} 站 / 共 {total} 站
       </div>
       <div className="progress-stars" aria-label={`已获得 ${stars} 颗星`}>
         {items.map((_, i) => (
