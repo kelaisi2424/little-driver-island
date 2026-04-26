@@ -10231,6 +10231,136 @@ html, body, #root {
   .game3d-hud em { font-size: 12px !important; }
 }
 
+/* =====================================================================
+   v1.6 赛车手游加强：速度数字加大 + 加载动画 + 控制按钮更立体
+   ===================================================================== */
+
+/* HUD 整体往上贴 + 玻璃强化 */
+.game3d-hud {
+  border-radius: 18px !important;
+  margin-top: max(6px, env(safe-area-inset-top, 6px)) !important;
+}
+
+/* 速度数字加大，赛车 KMH 仪表风格 */
+.game3d-hud strong {
+  font-size: 42px !important;
+  line-height: 1 !important;
+  letter-spacing: -2px !important;
+  filter: drop-shadow(0 0 6px rgba(140, 220, 255, 0.55));
+}
+.game3d-hud em {
+  font-size: 13px !important;
+  text-transform: uppercase;
+  letter-spacing: 2px !important;
+  font-style: normal !important;
+}
+
+/* HUD 中心区域：speed 大字 + km/h + 进度小胶囊垂直堆 */
+.game3d-hud-center {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 1px !important;
+  min-width: 86px;
+}
+
+/* HUD 按钮文字保持清晰 */
+.game3d-hud button {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: rgba(255,255,255,0.96) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  border-radius: 14px !important;
+  padding: 6px 12px !important;
+  min-width: 56px;
+}
+
+/* 控制按钮：v1.6 更"游戏化"——内嵌环形高光 */
+.game3d-control {
+  border-radius: 50% !important;
+  position: relative;
+}
+.game3d-control::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0) 50%);
+  opacity: 0.85;
+}
+.game3d-control::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.16);
+}
+.game3d-control.gas::after {
+  border-color: rgba(140, 255, 180, 0.45);
+  box-shadow: 0 0 0 4px rgba(20, 130, 60, 0.22), 0 0 18px rgba(80, 220, 130, 0.32);
+}
+.game3d-control.brake::after {
+  border-color: rgba(255, 180, 180, 0.55);
+  box-shadow: 0 0 0 4px rgba(180, 36, 36, 0.22), 0 0 18px rgba(255, 100, 100, 0.32);
+}
+.game3d-control.steer::after {
+  border-color: rgba(160, 220, 255, 0.42);
+}
+
+/* 油门/刹车按下时的"压感"效果 */
+.game3d-control.gas.pressed {
+  box-shadow:
+    0 6px 14px rgba(20, 130, 60, 0.45),
+    inset 0 8px 16px rgba(0, 60, 20, 0.55),
+    inset 0 -2px 6px rgba(255,255,255,0.32) !important;
+}
+.game3d-control.brake.pressed {
+  box-shadow:
+    0 6px 14px rgba(180, 36, 36, 0.45),
+    inset 0 8px 16px rgba(80, 0, 0, 0.55),
+    inset 0 -2px 6px rgba(255,255,255,0.32) !important;
+}
+
+/* 提示文字（hint）：v1.6 更"漂浮通知"风 */
+.game3d-hint {
+  background: linear-gradient(180deg, rgba(20, 30, 60, 0.78), rgba(8, 14, 28, 0.82)) !important;
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1.5px solid rgba(255,255,255,0.2) !important;
+  border-radius: 999px !important;
+  padding: 8px 18px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.32),
+    inset 0 1.5px 0 rgba(255,255,255,0.2);
+}
+
+/* v1.6 速度线（横屏 + 高速时显示一组淡淡白线流向后方） */
+.game3d-play::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 80px,
+      rgba(255,255,255,0.04) 80px,
+      rgba(255,255,255,0.04) 82px
+    );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 4;
+}
+
 /* =============================================================
    v15 车库页：6 辆车选择
    ============================================================= */
