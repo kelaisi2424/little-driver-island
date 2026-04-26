@@ -141,19 +141,21 @@ function SceneContent({
     }
 
     const speedFactor = THREE.MathUtils.clamp(state.speed / 19.5, 0, 1);
-    const followDistance = 6.6 + speedFactor * 3.2;
-    const cameraHeight = 2.75 + speedFactor * 0.7;
-    const sideLean = -state.steering * speedFactor * 0.65;
+    // 刹车时镜头靠近 + 平视；油门时镜头拉远 + 看更远
+    const brakeZoom = controls.brake ? -1.4 : 0;
+    const followDistance = 6.4 + speedFactor * 3.6 + brakeZoom;
+    const cameraHeight = 2.95 + speedFactor * 0.85;
+    const sideLean = -state.steering * speedFactor * 0.55;
     const desiredCamera = new THREE.Vector3(
       state.position.x + Math.sin(state.rotationY) * followDistance + Math.cos(state.rotationY) * sideLean,
       state.position.y + cameraHeight,
       state.position.z + Math.cos(state.rotationY) * followDistance - Math.sin(state.rotationY) * sideLean,
     );
-    camera.position.lerp(desiredCamera, 0.075);
+    camera.position.lerp(desiredCamera, 0.085);
     const lookAhead = new THREE.Vector3(
-      state.position.x - Math.sin(state.rotationY) * (8.5 + speedFactor * 4),
-      state.position.y + 1.05,
-      state.position.z - Math.cos(state.rotationY) * (8.5 + speedFactor * 4),
+      state.position.x - Math.sin(state.rotationY) * (10 + speedFactor * 5.5),
+      state.position.y + 1.2,
+      state.position.z - Math.cos(state.rotationY) * (10 + speedFactor * 5.5),
     );
     camera.lookAt(lookAhead);
     smoothSpeedRef.current = THREE.MathUtils.lerp(smoothSpeedRef.current, kmh(state.speed), 0.16);

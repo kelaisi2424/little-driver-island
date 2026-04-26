@@ -16,29 +16,46 @@ function Checkpoint({ checkpoint, done }: { checkpoint: CheckpointConfig; done: 
 
   return (
     <group ref={ringRef} position={[checkpoint.x, 0.06, checkpoint.z]}>
+      {/* 大门左立柱 */}
+      <mesh position={[-1.55, 1.4, 0]}>
+        <cylinderGeometry args={[0.08, 0.1, 2.8, 12]} />
+        <meshStandardMaterial color={done ? '#67e68a' : '#42c6ff'} emissive={done ? '#2ed35c' : '#198cff'} emissiveIntensity={0.6} />
+      </mesh>
+      {/* 大门右立柱 */}
+      <mesh position={[1.55, 1.4, 0]}>
+        <cylinderGeometry args={[0.08, 0.1, 2.8, 12]} />
+        <meshStandardMaterial color={done ? '#67e68a' : '#42c6ff'} emissive={done ? '#2ed35c' : '#198cff'} emissiveIntensity={0.6} />
+      </mesh>
+      {/* 地面发光圆环 */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.18, 0.075, 12, 48]} />
+        <torusGeometry args={[1.4, 0.12, 14, 56]} />
         <meshStandardMaterial
-          color={done ? '#67e68a' : '#42c6ff'}
-          emissive={done ? '#2ed35c' : '#198cff'}
-          emissiveIntensity={0.48}
+          color={done ? '#9bf5b3' : '#7ee0ff'}
+          emissive={done ? '#3eea6e' : '#3ab8ff'}
+          emissiveIntensity={done ? 1.4 : 1.8}
           transparent
-          opacity={0.86}
+          opacity={0.92}
         />
       </mesh>
-      <mesh position={[0, 1.35, 0]}>
-        <torusGeometry args={[0.72, 0.055, 10, 42]} />
+      {/* 顶部小圆环（拱门顶） */}
+      <mesh position={[0, 2.6, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.55, 0.09, 12, 46]} />
         <meshStandardMaterial
-          color={done ? '#67e68a' : '#42c6ff'}
-          emissive={done ? '#2ed35c' : '#198cff'}
-          emissiveIntensity={0.5}
+          color={done ? '#9bf5b3' : '#7ee0ff'}
+          emissive={done ? '#3eea6e' : '#3ab8ff'}
+          emissiveIntensity={1.2}
           transparent
-          opacity={0.78}
+          opacity={0.85}
         />
       </mesh>
+      {/* 中心高亮球 */}
       <mesh position={[0, 1.35, 0]}>
-        <sphereGeometry args={[0.17, 16, 12]} />
-        <meshStandardMaterial color="#ffffff" emissive="#bff3ff" emissiveIntensity={0.4} />
+        <sphereGeometry args={[0.22, 18, 14]} />
+        <meshStandardMaterial
+          color="#ffffff"
+          emissive={done ? '#bdffd2' : '#bff3ff'}
+          emissiveIntensity={1.4}
+        />
       </mesh>
     </group>
   );

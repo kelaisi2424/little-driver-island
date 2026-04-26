@@ -50,11 +50,13 @@ export default function CarModel({ stateRef }: CarModelProps) {
   const steering = useRef(0);
   const glassMaterial = useMemo(
     () => new THREE.MeshStandardMaterial({
-      color: '#8bdcff',
+      color: '#bdf0ff',
       transparent: true,
-      opacity: 0.72,
-      roughness: 0.12,
-      metalness: 0.08,
+      opacity: 0.78,
+      roughness: 0.08,
+      metalness: 0.18,
+      emissive: '#7fcfff',
+      emissiveIntensity: 0.25,
     }),
     [],
   );
@@ -112,6 +114,24 @@ export default function CarModel({ stateRef }: CarModelProps) {
       <mesh position={[0, 0.12, -1.74]}>
         <boxGeometry args={[1.44, 0.2, 0.16]} />
         <meshStandardMaterial color="#f2f4f5" roughness={0.35} metalness={0.2} />
+      </mesh>
+      {/* 车牌 (前后) - 白底深字 */}
+      <mesh position={[0, 0.32, 1.79]}>
+        <boxGeometry args={[0.66, 0.18, 0.02]} />
+        <meshStandardMaterial color="#ffffff" emissive="#fff" emissiveIntensity={0.12} />
+      </mesh>
+      <mesh position={[0, 0.32, -1.79]}>
+        <boxGeometry args={[0.66, 0.18, 0.02]} />
+        <meshStandardMaterial color="#ffffff" emissive="#fff" emissiveIntensity={0.12} />
+      </mesh>
+      {/* 后视镜 */}
+      <mesh position={[-1.04, 0.78, -0.4]}>
+        <boxGeometry args={[0.18, 0.14, 0.18]} />
+        <meshStandardMaterial color="#c9141c" roughness={0.4} />
+      </mesh>
+      <mesh position={[1.04, 0.78, -0.4]}>
+        <boxGeometry args={[0.18, 0.14, 0.18]} />
+        <meshStandardMaterial color="#c9141c" roughness={0.4} />
       </mesh>
       <mesh position={[0, 0.18, 1.65]}>
         <boxGeometry args={[1.38, 0.18, 0.16]} />

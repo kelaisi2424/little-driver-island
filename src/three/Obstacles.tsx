@@ -7,25 +7,35 @@ interface ObstaclesProps {
 function Cone({ x, z }: ConeConfig) {
   return (
     <group position={[x, 0, z]}>
+      {/* 地面阴影 */}
       <mesh position={[0, 0.035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.72, 24]} />
-        <meshBasicMaterial color="black" transparent opacity={0.2} depthWrite={false} />
+        <circleGeometry args={[0.95, 24]} />
+        <meshBasicMaterial color="black" transparent opacity={0.28} depthWrite={false} />
       </mesh>
-      <mesh position={[0, 0.13, 0]} rotation={[0, Math.PI / 4, 0]}>
-        <cylinderGeometry args={[0.5, 0.62, 0.26, 4]} />
-        <meshStandardMaterial color="#f06f25" roughness={0.54} />
+      {/* 黑色底座 */}
+      <mesh position={[0, 0.16, 0]}>
+        <cylinderGeometry args={[0.65, 0.78, 0.32, 24]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.6} />
       </mesh>
-      <mesh position={[0, 0.72, 0]}>
-        <coneGeometry args={[0.42, 1.16, 28]} />
-        <meshStandardMaterial color="#ff842e" roughness={0.48} />
+      {/* 主锥体 - 加亮加大 */}
+      <mesh position={[0, 0.95, 0]}>
+        <coneGeometry args={[0.55, 1.55, 28]} />
+        <meshStandardMaterial color="#ff7a2a" emissive="#ff5e10" emissiveIntensity={0.35} roughness={0.4} />
       </mesh>
-      <mesh position={[0, 0.61, 0]}>
-        <cylinderGeometry args={[0.31, 0.34, 0.1, 24]} />
-        <meshStandardMaterial color="#fff4df" roughness={0.36} />
+      {/* 顶端反光环 (亮白) */}
+      <mesh position={[0, 0.78, 0]}>
+        <cylinderGeometry args={[0.4, 0.43, 0.15, 24]} />
+        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} roughness={0.25} />
       </mesh>
-      <mesh position={[0, 0.35, 0]}>
-        <cylinderGeometry args={[0.43, 0.47, 0.08, 24]} />
-        <meshStandardMaterial color="#fff4df" roughness={0.36} />
+      {/* 中部第二条反光环 */}
+      <mesh position={[0, 0.46, 0]}>
+        <cylinderGeometry args={[0.52, 0.55, 0.13, 24]} />
+        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} roughness={0.25} />
+      </mesh>
+      {/* 顶端小球（更显眼） */}
+      <mesh position={[0, 1.78, 0]}>
+        <sphereGeometry args={[0.1, 12, 10]} />
+        <meshStandardMaterial color="#ffeb40" emissive="#ffeb40" emissiveIntensity={0.8} />
       </mesh>
     </group>
   );
