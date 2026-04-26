@@ -1,6 +1,9 @@
 import type { Level3D } from '../../data/levels3d';
 import type { ChallengeConfig, DrivingTelemetry } from '../../data/challenge3d';
 import { previewStars } from '../../data/challenge3d';
+import type { StoryMission } from '../../data/storyMissions';
+import type { MissionProgress } from '../../three/missionObjectives';
+import { getMissionGoalText } from '../../three/missionLogic';
 
 interface GameHUDProps {
   level: Level3D;
@@ -12,6 +15,9 @@ interface GameHUDProps {
   mode?: 'easy' | 'challenge';
   challengeConfig?: ChallengeConfig | null;
   telemetry?: DrivingTelemetry | null;
+  /** v1.9: 当前剧情任务 + 实时任务进度 */
+  mission?: StoryMission;
+  missionProgress?: MissionProgress | null;
   onPause: () => void;
   onToggleMute: () => void;
   onHome: () => void;
@@ -32,21 +38,34 @@ export default function GameHUD({
   mode = 'easy',
   challengeConfig,
   telemetry,
+  mission,
+  missionProgress,
   onPause,
   onToggleMute,
   onHome,
 }: GameHUDProps) {
-  const checkpointText = level.checkpoints.length > 0
-    ? `${checkpointPassed}/${level.checkpoints.length}`
-    : '终点';
-
   const isChallenge = mode === 'challenge' && challengeConfig?.enabled;
+
+  // v1.9：根据 mission + missionProgress 计算"任务目标"文字（替代旧的"进度 X/Y"）
+  const goalText = (mission && missionProgress)
+    ? getMissionGoalText(mission, level, missionProgress)
+    : level.checkpoints.length > 0
+      ? `进度 ${checkpointPassed}/${level.checkpoints.length}`
+      : '到达终点';
 
   // 挑战模式：实时计算当前预估星级
   let starPreview = 3;
   if (isChallenge && challengeConfig && telemetry) {
     starPreview = previewStars(telemetry, challengeConfig, level);
   }
+
+  // v1.9: 修车厂任务在 HUD 角落显示货物标签
+  const cargoBadge =
+    mission?.gameplayType === 'repairDelivery' && mission.missionParams.cargoEmoji ? (
+      <span className="game3d-hud-cargo" title={mission.missionParams.cargoLabel ?? '货物'}>
+        {mission.missionParams.cargoEmoji}
+      </span>
+    ) : null;
 
   return (
     <div className={`game3d-hud ${isChallenge ? 'is-challenge' : ''}`}>
@@ -71,18 +90,19 @@ export default function GameHUD({
             ))}
           </span>
         ) : (
-          <span>进度 {checkpointText}</span>
+          <span className="game3d-hud-goal">{goalText}</span>
         )}
       </div>
       <div className="game3d-hud-right">
+        {cargoBadge}
         {isChallenge && telemetry ? (
           <span className="game3d-hud-collisions" title="碰撞次数">
             💥 {telemetry.collisions}
           </span>
         ) : null}
         {isChallenge ? (
-          <span className="game3d-hud-checkpoints" title="检查点">
-            🚩 {checkpointText}
+          <span className="game3d-hud-checkpoints" title="进度">
+            🚩 {goalText}
           </span>
         ) : null}
         <button onClick={onToggleMute} type="button">{muted ? '静音' : '声音'}</button>

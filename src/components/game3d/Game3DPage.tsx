@@ -25,6 +25,11 @@ import {
   type ChallengeConfig,
   type DrivingTelemetry,
 } from '../../data/challenge3d';
+// v1.9 任务玩法
+import {
+  createMissionProgress,
+  type MissionProgress,
+} from '../../three/missionObjectives';
 import { awardSticker } from '../../utils/stickers';
 import DrivingScene, { type DrivingDebugState } from '../../three/DrivingScene';
 import { useDrivingControls } from '../../three/useDrivingControls';
@@ -189,6 +194,12 @@ export default function Game3DPage() {
   const handleTelemetryChange = useCallback((t: DrivingTelemetry) => {
     setTelemetry({ ...t });
   }, []);
+  // v1.9: mission progress（HUD 用 React state，逻辑层用 ref）
+  const [missionProgressState, setMissionProgressState] = useState<MissionProgress | null>(null);
+  const missionProgressRef = useRef<MissionProgress>(createMissionProgress());
+  const handleMissionProgress = useCallback((p: MissionProgress) => {
+    setMissionProgressState(p);
+  }, []);
   const usage = useDailyUsage(config.dailyMinutes);
 
   useEffect(() => {
@@ -265,6 +276,11 @@ export default function Game3DPage() {
       telemetryRef.current.averageSpeed = 0;
       telemetryRef.current.parkingAccuracy = 0;
       telemetryRef.current.completed = false;
+    }
+    // v1.9: 清空 mission progress
+    setMissionProgressState(null);
+    if (missionProgressRef.current) {
+      Object.assign(missionProgressRef.current, createMissionProgress());
     }
     setScreen('playing');
     playSound('engine');
@@ -566,13 +582,16 @@ export default function Game3DPage() {
             controls={controls}
             controlsRef={controlsRef}
             car={selectedCar}
+            mission={currentMission}
             paused={paused}
             telemetryRef={telemetryRef as RefObject<DrivingTelemetry>}
+            missionProgressRef={missionProgressRef}
             onSpeedChange={setSpeed}
             onCheckpointChange={setCheckpointPassed}
             onHint={setHint}
             onComplete={completeLevel}
             onTelemetryChange={selectedMode === 'challenge' ? handleTelemetryChange : undefined}
+            onMissionProgress={handleMissionProgress}
             onDebugChange={import.meta.env.DEV ? setDrivingDebug : undefined}
           />
           {import.meta.env.DEV && <DebugDrivingHud debug={drivingDebug} />}
@@ -585,6 +604,8 @@ export default function Game3DPage() {
             mode={selectedMode}
             challengeConfig={challengeConfig}
             telemetry={telemetry}
+            mission={currentMission}
+            missionProgress={missionProgressState}
             onPause={() => setPaused((value) => !value)}
             onToggleMute={toggleSound}
             onHome={() => setScreen('storymap')}

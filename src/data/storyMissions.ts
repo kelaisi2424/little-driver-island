@@ -1,6 +1,8 @@
 // v1.8 剧情任务生成器：为 100 关每关生成"剧情皮肤"。
 // 不重写关卡数据 —— 复用 Level3D，只加 NPC 对话/任务名称。
 // 每关 1-2 句对话，5 岁孩子能听懂。
+//
+// v1.9：增加 gameplayType + missionParams，让 3D 玩法跟着剧情真改变。
 
 import { getLevel3D, type Level3D } from './levels3d';
 import {
@@ -9,6 +11,7 @@ import {
   type StoryChapter,
   type NpcDef,
 } from './storyChapters';
+import type { GameplayType, MissionParams } from '../three/missionObjectives';
 
 export interface StoryMission {
   levelId: number;            // 1-100 → 复用 Level3D
@@ -29,6 +32,10 @@ export interface StoryMission {
   rewardText: string;
   /** 关卡末关：是否触发剧情节点（解锁下一章） */
   isChapterEnd: boolean;
+  /** v1.9：玩法类型 */
+  gameplayType: GameplayType;
+  /** v1.9：玩法参数 */
+  missionParams: MissionParams;
 }
 
 // =====================================================================
@@ -314,6 +321,334 @@ function makeMissionTitle(chapterId: number, n: number): string {
 }
 
 // =====================================================================
+// v1.9：levelId → gameplayType + missionParams
+// L1-20 显式手工绑定；L21-100 走章节默认。
+// =====================================================================
+
+interface GameplayBinding {
+  type: GameplayType;
+  params: MissionParams;
+}
+
+/** 工具：将 cones 数组转为 puddles（雨天关） */
+function conesToPuddles(level: Level3D) {
+  return level.cones.map((c) => ({ x: c.x, z: c.z }));
+}
+
+/** 工具：将 checkpoints 转为 schoolPickup stops，颜色循环采样 */
+function checkpointsToPassengerStops(level: Level3D) {
+  const colors: Array<'red' | 'blue' | 'yellow' | 'green'> = ['red', 'blue', 'yellow', 'green'];
+  return level.checkpoints.map((cp, i) => ({
+    x: cp.x,
+    z: cp.z,
+    color: colors[i % colors.length],
+  }));
+}
+
+/** 工具：将 checkpoints 转为 numberGates，数字按 1..N */
+function checkpointsToNumberGates(level: Level3D) {
+  return level.checkpoints.map((cp, i) => ({
+    x: cp.x,
+    z: cp.z,
+    number: ((i % 5) + 1),
+  }));
+}
+
+/** 工具：将 checkpoints 转为 colorGates */
+function checkpointsToColorGates(level: Level3D) {
+  const colors: Array<'red' | 'blue' | 'yellow' | 'green'> = ['red', 'blue', 'yellow', 'green'];
+  return level.checkpoints.map((cp, i) => ({
+    x: cp.x,
+    z: cp.z,
+    color: colors[i % colors.length],
+  }));
+}
+
+/** 工具：在 finishZ 附近生成 4 栋彩色屋子（送货关） */
+function makeDeliveryHouses(level: Level3D) {
+  const z = level.finishZ + 4;
+  return [
+    { x: -3.0, z, color: 'red' as const },
+    { x: -1.0, z, color: 'blue' as const },
+    { x: 1.0,  z, color: 'yellow' as const },
+    { x: 3.0,  z, color: 'green' as const },
+  ];
+}
+
+/** 前 20 关的显式玩法绑定 */
+function getExplicitBinding(levelId: number, level: Level3D): GameplayBinding | null {
+  switch (levelId) {
+    // L1-3: 简单开车
+    case 1:
+    case 2:
+    case 3:
+      return { type: 'simpleDrive', params: {} };
+
+    // L4-5: 检查点（用 simpleDrive 的 checkpoint 路径，但确保 level 有 checkpoints）
+    case 4:
+    case 5:
+      return { type: 'simpleDrive', params: {} };
+
+    // L6-7: 数字车道
+    case 6: {
+      const gates = level.checkpoints.length > 0
+        ? checkpointsToNumberGates(level)
+        : [
+            { x: -2.0, z: -28, number: 1 },
+            { x: 0,    z: -45, number: 2 },
+            { x: 2.0,  z: -62, number: 3 },
+          ];
+      return {
+        type: 'numberLane',
+        params: {
+          targetNumbers: [2],
+          numberGates: gates,
+        },
+      };
+    }
+    case 7: {
+      const gates = level.checkpoints.length > 0
+        ? checkpointsToNumberGates(level)
+        : [
+            { x: -2.0, z: -30, number: 1 },
+            { x: 0,    z: -50, number: 2 },
+            { x: 2.0,  z: -70, number: 3 },
+          ];
+      return {
+        type: 'numberLane',
+        params: { targetNumbers: [3], numberGates: gates },
+      };
+    }
+
+    // L8: 停车
+    case 8:
+      return {
+        type: 'parking',
+        params: {
+          parkingZoneX: 0,
+          parkingZoneZ: level.finishZ + 1.5,
+          parkingZoneRadius: 1.6,
+          parkingHoldTime: 1.0,
+          parkingMaxSpeed: 3.0,
+        },
+      };
+
+    // L9: 红绿灯
+    case 9:
+      return {
+        type: 'trafficRule',
+        params: {
+          trafficLights: [
+            { z: -38, redPhase: 4, greenPhase: 4, cycleSeconds: 9 },
+          ],
+        },
+      };
+
+    // L10: 章节末停车（更难）
+    case 10:
+      return {
+        type: 'parking',
+        params: {
+          parkingZoneX: 0,
+          parkingZoneZ: level.finishZ + 1.5,
+          parkingZoneRadius: 1.4,
+          parkingHoldTime: 1.2,
+          parkingMaxSpeed: 2.5,
+        },
+      };
+
+    // L11-13: 接送小朋友
+    case 11:
+    case 12:
+    case 13: {
+      const stops = level.checkpoints.length > 0
+        ? checkpointsToPassengerStops(level).slice(0, levelId - 10)
+        : Array.from({ length: levelId - 10 }, (_, i) => ({
+            x: i % 2 === 0 ? -1.8 : 1.8,
+            z: -25 - i * 18,
+            color: (['red', 'blue', 'yellow'] as const)[i] ?? 'green',
+          }));
+      return {
+        type: 'schoolPickup',
+        params: {
+          passengerCount: levelId - 10,
+          passengerStops: stops,
+        },
+      };
+    }
+
+    // L14-15: 送货
+    case 14:
+    case 15: {
+      const target = levelId === 14 ? 'red' : 'blue';
+      return {
+        type: 'delivery',
+        params: {
+          targetColor: target,
+          deliveryHouses: makeDeliveryHouses(level),
+        },
+      };
+    }
+
+    // L16-17: 修车厂送零件
+    case 16:
+      return {
+        type: 'repairDelivery',
+        params: { cargoEmoji: '🛞', cargoLabel: '轮胎', maxCollisions: 3 },
+      };
+    case 17:
+      return {
+        type: 'repairDelivery',
+        params: { cargoEmoji: '🔧', cargoLabel: '工具', maxCollisions: 3 },
+      };
+
+    // L18: 斑马线让行
+    case 18:
+      return {
+        type: 'pedestrianYield',
+        params: { crosswalkZ: -28, yieldRadius: 5, pedestrianSpeed: 0.4 },
+      };
+
+    // L19: 雨天
+    case 19: {
+      const puddles = level.cones.length > 0
+        ? conesToPuddles(level)
+        : [
+            { x: -1.4, z: -22 },
+            { x: 1.6, z: -38 },
+            { x: -0.8, z: -52 },
+          ];
+      return {
+        type: 'rainyDrive',
+        params: { puddles, maxPuddleSplash: 2 },
+      };
+    }
+
+    // L20: 综合任务（接送 + 停车）
+    case 20: {
+      const stops = level.checkpoints.length > 0
+        ? checkpointsToPassengerStops(level).slice(0, 2)
+        : [
+            { x: -2.0, z: -28, color: 'red' as const },
+            { x: 2.0, z: -52, color: 'blue' as const },
+          ];
+      return {
+        type: 'mixedMission',
+        params: {
+          subTypes: ['schoolPickup', 'parking'],
+          passengerCount: 2,
+          passengerStops: stops,
+          parkingZoneX: 0,
+          parkingZoneZ: level.finishZ + 1.5,
+          parkingZoneRadius: 1.7,
+          parkingHoldTime: 1.0,
+          parkingMaxSpeed: 3.0,
+        },
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+/** L21-100：按章节默认绑定 */
+function getChapterDefaultBinding(level: Level3D): GameplayBinding {
+  const chapterId = Math.ceil(level.id / 10);
+  switch (chapterId) {
+    case 3: // 修车厂
+      return {
+        type: 'repairDelivery',
+        params: { cargoEmoji: '🔧', cargoLabel: '零件', maxCollisions: 3 },
+      };
+    case 4: // 雨天
+      return {
+        type: 'rainyDrive',
+        params: {
+          puddles: level.cones.length > 0 ? conesToPuddles(level) : [],
+          maxPuddleSplash: 2,
+        },
+      };
+    case 5: // 交通安全
+      return {
+        type: 'trafficRule',
+        params: {
+          trafficLights: [
+            { z: level.finishZ + 30, redPhase: 4, greenPhase: 4, cycleSeconds: 9 },
+            ...(level.id % 10 >= 5
+              ? [{ z: level.finishZ + 60, redPhase: 4, greenPhase: 4, cycleSeconds: 9 }]
+              : []),
+          ],
+        },
+      };
+    case 6: // 颜色路线
+      return {
+        type: 'colorRoute',
+        params: {
+          targetColor: (['red', 'blue', 'yellow', 'green'] as const)[level.id % 4],
+          colorGates: level.checkpoints.length > 0
+            ? checkpointsToColorGates(level)
+            : [],
+        },
+      };
+    case 7: // 巴士路线（多站点）
+      return {
+        type: 'multiStopRoute',
+        params: {
+          stops: level.checkpoints.length > 0
+            ? level.checkpoints.map((cp) => ({ x: cp.x, z: cp.z }))
+            : [],
+        },
+      };
+    case 9: // 汽车城大任务
+      return {
+        type: 'mixedMission',
+        params: {
+          subTypes: ['trafficRule', 'parking'],
+          trafficLights: [
+            { z: level.finishZ + 35, redPhase: 4, greenPhase: 4, cycleSeconds: 9 },
+          ],
+          parkingZoneX: 0,
+          parkingZoneZ: level.finishZ + 1.5,
+          parkingZoneRadius: 1.7,
+          parkingHoldTime: 1.0,
+          parkingMaxSpeed: 3.0,
+        },
+      };
+    case 10: // 毕业综合
+      return {
+        type: 'mixedMission',
+        params: {
+          subTypes: level.kind === 'parking'
+            ? ['parking']
+            : level.kind === 'cones'
+              ? ['rainyDrive']
+              : ['trafficRule'],
+          puddles: level.cones.length > 0 ? conesToPuddles(level) : [],
+          trafficLights: [
+            { z: level.finishZ + 40, redPhase: 4, greenPhase: 4, cycleSeconds: 9 },
+          ],
+          parkingZoneX: 0,
+          parkingZoneZ: level.finishZ + 1.5,
+          parkingZoneRadius: 1.5,
+          parkingHoldTime: 1.0,
+          parkingMaxSpeed: 3.0,
+        },
+      };
+    case 8: // 山路
+    case 1:
+    case 2:
+    default:
+      return { type: 'simpleDrive', params: {} };
+  }
+}
+
+function getGameplayBinding(levelId: number, level: Level3D): GameplayBinding {
+  const explicit = getExplicitBinding(levelId, level);
+  if (explicit) return explicit;
+  return getChapterDefaultBinding(level);
+}
+
+// =====================================================================
 // 主入口：levelId → StoryMission
 // =====================================================================
 
@@ -323,6 +658,7 @@ export function getStoryMission(levelId: number): StoryMission {
   const chapter: StoryChapter = getStoryChapter(Math.ceil(safe / 10));
   const n = ((safe - 1) % 10) + 1;
   const pack = DIALOG_PACKS[chapter.id];
+  const binding = getGameplayBinding(safe, level);
 
   return {
     levelId: safe,
@@ -337,6 +673,8 @@ export function getStoryMission(levelId: number): StoryMission {
     learningPoint: level.summary,
     rewardText: pack?.rewardLine ?? '继续前进',
     isChapterEnd: n === 10,
+    gameplayType: binding.type,
+    missionParams: binding.params,
   };
 }
 
