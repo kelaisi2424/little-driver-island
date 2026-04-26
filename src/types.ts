@@ -52,6 +52,8 @@ export interface ParentConfig {
   dailyMinutes: number;         // 每日时长（10/15/20）
   restAfterLevels: number;      // 连续 N 关后强制休息（3/5/8）
   reminder: string;             // 休息页文字
+  // v1.7：是否在首页显示"挑战闯关"入口（默认 true）
+  challengeEnabled?: boolean;
   // 兼容字段（不再使用，留着别让旧文件爆掉）
   totalTasks?: number;
   dailyLimit?: number;

@@ -80,6 +80,22 @@ export default function ParentSettings({ config, onSave, onBack }: ParentSetting
       </div>
 
       <div className="parent-card">
+        <h3>挑战模式</h3>
+        <label className="voice-toggle">
+          <input
+            type="checkbox"
+            checked={draft.challengeEnabled !== false}
+            onChange={(e) => setDraft({ ...draft, challengeEnabled: e.target.checked })}
+          />
+          <span>在首页显示"挑战闯关"入口</span>
+        </label>
+        <p>
+          挑战模式适合大一点的孩子，包含限时、避障、精准停车等目标，按表现拿 1-3 颗星。
+          关闭后首页只显示"轻松练习"，原有的 100 关进度不变。
+        </p>
+      </div>
+
+      <div className="parent-card">
         <h3>儿童语音播报</h3>
         <label className="voice-toggle">
           <input
