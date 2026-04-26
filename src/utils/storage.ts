@@ -157,7 +157,10 @@ export function updateLevelProgress(gameId: string, level: number, stars: number
   const entry = progress[gameId] ?? { currentLevel: 1, stars: {} };
   const oldStars = entry.stars[String(level)] ?? 0;
   entry.stars[String(level)] = Math.max(oldStars, stars);
-  entry.currentLevel = Math.max(entry.currentLevel, Math.min(30, level + 1));
+  // v11 hotfix：去掉硬编码的 30 上限——本来是 v1 只有 30 关时留下的 BUG，
+  // 导致 100 关版本第 30 关后永远无法解锁第 31 关。
+  // 上限交给消费方（Game3DPage / LevelSelect）按 LEVELS_3D.length 兜底。
+  entry.currentLevel = Math.max(entry.currentLevel, level + 1);
   progress[gameId] = entry;
   saveProgress(progress);
   return progress;

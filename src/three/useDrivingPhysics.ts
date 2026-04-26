@@ -19,13 +19,19 @@ export interface PhysicsOptions {
   turnSpeed: number;
 }
 
+// v11 hotfix：调到更平稳的儿童 Arcade Driving
+// - maxSpeed 降到 17（约 60km/h），孩子追得上
+// - acceleration 11（柔和起步，不会一下窜出去）
+// - braking 22（明显减速但不会瞬停）
+// - friction 4.6（松手后自然滑行 ~3 秒到停）
+// - turnSpeed 1.65（按方向键能明显转弯，不会原地飘移）
 export const DEFAULT_PHYSICS: PhysicsOptions = {
   roadHalfWidth: 3.65,
-  maxSpeed: 19.5,
-  acceleration: 18,
-  braking: 34,
-  friction: 3.8,
-  turnSpeed: 1.42,
+  maxSpeed: 17,
+  acceleration: 11,
+  braking: 22,
+  friction: 4.6,
+  turnSpeed: 1.65,
 };
 
 export function createDrivingState() {

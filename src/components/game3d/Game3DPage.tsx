@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { LEVELS_3D, getLevel3D, type Level3D } from '../../data/levels3d';
 import { CHAPTERS_3D, chapterOfLevel, isChapterEndLevel, type Chapter3D } from '../../data/chapters3d';
 import { useDailyUsage } from '../../hooks/useDailyUsage';
 import type { ParentConfig } from '../../types';
-import { setVoiceEnabled } from '../../utils/speech';
+import { primeVoice, setVoiceEnabled, speak } from '../../utils/speech';
 import { getMuted, playSound, toggleMuted } from '../../utils/sound';
 import {
   addLearningRecord,
@@ -84,7 +84,17 @@ export default function Game3DPage() {
   const [speed, setSpeed] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [checkpointPassed, setCheckpointPassed] = useState(0);
-  const [hint, setHint] = useState('准备发车');
+  const [hint, setHintRaw] = useState('准备发车');
+  const lastSpokenRef = useRef<{ text: string; t: number }>({ text: '', t: 0 });
+  // 防止同一句话短时间反复朗读
+  const setHint = (text: string) => {
+    setHintRaw(text);
+    const now = Date.now();
+    if (text && text !== lastSpokenRef.current.text && now - lastSpokenRef.current.t > 1500) {
+      lastSpokenRef.current = { text, t: now };
+      speak(text);
+    }
+  };
   const [muted, setMuted] = useState(getMuted);
   const [paused, setPaused] = useState(false);
   const [lastStars, setLastStars] = useState(3);
@@ -140,6 +150,12 @@ export default function Game3DPage() {
     setStartedAt(Date.now());
     setScreen('playing');
     playSound('engine');
+    // v11 hotfix：解锁 iOS 语音 + 朗读关卡任务
+    primeVoice();
+    lastSpokenRef.current = { text: '', t: 0 };
+    window.setTimeout(() => {
+      speak(`小司机准备出发啦。${level.mission}`);
+    }, 250);
   };
 
   const completeLevel = (stars: number, playSeconds: number) => {
@@ -165,6 +181,10 @@ export default function Game3DPage() {
     }
 
     setScreen('complete');
+    // v11 hotfix：通关语音
+    window.setTimeout(() => {
+      speak(`做得好，完成第 ${level.id} 关啦！`);
+    }, 200);
   };
 
   const goNext = () => {
@@ -183,8 +203,9 @@ export default function Game3DPage() {
   };
 
   const toggleSound = () => {
-    const next = toggleMuted();
+    const next = toggleMuted();   // next === true 表示静音
     setMuted(next);
+    setVoiceEnabled(!next);       // v11 hotfix：与音效同步开关
     if (!next) playSound('click');
   };
 
@@ -321,22 +342,42 @@ export default function Game3DPage() {
         </section>
       )}
 
-      {screen === 'complete' && (
-        <LevelComplete3D
-          level={level}
-          stars={lastStars}
-          chapterStickerId={chapterStickerJustUnlocked}
-          onNext={goNext}
-          onRetry={() => startLevel(level)}
-          onHome={() => setScreen('home')}
-        />
-      )}
+      {screen === 'complete' && (() => {
+        // v11 hotfix：根据 level.id 计算通关页模式
+        const isFinal = level.id >= LEVELS_3D.length;
+        const isChapterEnd = level.id % 10 === 0 && !isFinal;
+        const mode = isFinal ? 'final' : isChapterEnd ? 'chapter-end' : 'regular';
+        const nextChapter = isChapterEnd
+          ? CHAPTERS_3D[Math.floor(level.id / 10)] ?? null  // L10 → idx 1 = ch2
+          : null;
+        return (
+          <LevelComplete3D
+            level={level}
+            stars={lastStars}
+            mode={mode}
+            chapterStickerId={chapterStickerJustUnlocked}
+            nextChapter={nextChapter}
+            onNext={goNext}
+            onRetry={() => startLevel(level)}
+            onHome={() => setScreen('home')}
+            onChapters={() => setScreen('chapters')}
+          />
+        );
+      })()}
 
       {screen === 'parent' && (
         <ParentSettings config={config} onSave={saveParentConfig} onBack={() => setScreen('home')} />
       )}
       {screen === 'stickers' && <StickerBook onBack={() => setScreen('home')} />}
-      {screen === 'rest' && <RestPage onDone={() => setScreen('home')} />}
+      {screen === 'rest' && (
+        <RestPage
+          onDone={() => setScreen('home')}
+          onContinue={() => {
+            const nextId = Math.min(LEVELS_3D.length, level.id + 1);
+            startLevel(getLevel3D(nextId));
+          }}
+        />
+      )}
     </main>
   );
 }
