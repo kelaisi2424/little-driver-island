@@ -4859,18 +4859,23 @@ button {
 
 .sticker-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
   margin-top: 14px;
 }
 
 .sticker-cell {
-  min-height: 142px;
-  padding: 12px;
-  border-radius: 22px;
+  min-height: 132px;
+  padding: 10px;
+  border-radius: 18px;
   text-align: center;
-  background: rgba(255,255,255,0.86);
-  box-shadow: 0 7px 14px rgba(42,68,54,0.12);
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 5px 12px rgba(42,68,54,0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .sticker-emoji {
@@ -4923,3 +4928,1240 @@ button {
     min-height: 78px;
   }
 }
+
+/* ====================================================================
+   v3 重构 —— 竖屏小游戏视觉
+   覆盖旧的横屏强制规则；新增 HomePage / DrivingLevel / LevelComplete /
+   LevelSelect / Minigames 等页面的样式。
+   ==================================================================== */
+
+/* 解除旧版"必须横屏"行为：新版本是纯竖屏 9:16 */
+.driving-app {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  height: 100dvh;
+  background: linear-gradient(180deg, #6dc7ff 0%, #c8efff 38%, #fff5e6 56%, #97d873 100%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+@media (orientation: portrait) {
+  .portrait-rotate { display: none !important; }
+  .driving-master { display: block; }
+}
+@media (orientation: landscape) {
+  .portrait-rotate { display: none !important; }
+}
+
+/* ---------------- 通用页面颜色变量补充 ---------------- */
+.driving-app {
+  --c-game-primary: #ff5e3a;
+  --c-game-primary-dark: #c93817;
+  --c-game-yellow: #ffcb2d;
+  --c-game-yellow-dark: #d49b00;
+  --c-game-green: #4ed176;
+  --c-game-green-dark: #2ea857;
+  --c-game-blue: #4a9ff0;
+  --c-game-blue-dark: #2671bf;
+  --c-game-card: #ffffff;
+  --c-game-text: #2d2218;
+  --c-game-soft: #6c5e54;
+}
+
+/* =====================================================================
+   首页 HomePage
+   ===================================================================== */
+
+.home-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 顶部条 */
+.home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px;
+  z-index: 5;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.home-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 900;
+  font-size: 17px;
+  color: #1f3a5f;
+  text-shadow: 1px 1px 0 rgba(255,255,255,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.home-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
+}
+.home-stats {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255,255,255,0.9);
+  padding: 5px 9px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #2d2218;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* 主视觉舞台 - 自带完整背景，避免与父级 gradient 拼接 */
+.home-stage {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  margin: 6px 8px 0;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg,
+      #6dc7ff 0%,
+      #a5deff 22%,
+      #c8efff 38%,
+      #d0f3a8 42%,
+      #97d873 70%,
+      #7fc55e 100%);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+}
+
+/* 太阳 */
+.home-sun {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  font-size: 50px;
+  filter: drop-shadow(0 0 16px rgba(255,200,0,0.5));
+  animation: sun-pulse 4s ease-in-out infinite;
+  z-index: 1;
+}
+@keyframes sun-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* 云 */
+.home-cloud {
+  position: absolute;
+  background: #fff;
+  border-radius: 50px;
+  box-shadow: 16px 0 0 -2px #fff, -16px 0 0 -2px #fff;
+  opacity: 0.9;
+  z-index: 1;
+}
+.home-cloud.cloud-1 { width: 50px; height: 18px; top: 10%; left: 8%; animation: cloud-drift-1 22s linear infinite; }
+.home-cloud.cloud-2 { width: 40px; height: 14px; top: 22%; left: 60%; animation: cloud-drift-2 28s linear infinite; }
+.home-cloud.cloud-3 { width: 35px; height: 12px; top: 6%; left: 38%; animation: cloud-drift-1 26s linear infinite; }
+@keyframes cloud-drift-1 {
+  0% { transform: translateX(-30px); }
+  100% { transform: translateX(calc(100vw + 30px)); }
+}
+@keyframes cloud-drift-2 {
+  0% { transform: translateX(20px); }
+  100% { transform: translateX(calc(-100vw - 20px)); }
+}
+
+/* 远山 - 在草地与天空交界处 */
+.home-mountain {
+  position: absolute;
+  top: 32%;
+  width: 0; height: 0;
+  border-style: solid;
+  z-index: 1;
+}
+.home-mountain.m1 {
+  left: 8%;
+  border-width: 0 70px 55px 70px;
+  border-color: transparent transparent #6a9b58 transparent;
+  opacity: 0.65;
+}
+.home-mountain.m2 {
+  right: 6%;
+  top: 35%;
+  border-width: 0 56px 44px 56px;
+  border-color: transparent transparent #5a8a4a transparent;
+  opacity: 0.7;
+}
+
+/* 装饰：路边小红绿灯 */
+.home-deco-light {
+  position: absolute;
+  top: 38%;
+  right: 24px;
+  z-index: 2;
+}
+.hd-pole {
+  width: 5px;
+  height: 50px;
+  background: #5a4a3a;
+  margin: 0 auto;
+  border-radius: 2px;
+}
+.hd-box {
+  width: 22px;
+  background: #2a2a2a;
+  border-radius: 5px;
+  padding: 4px 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  position: relative;
+  top: -50px;
+  margin-bottom: -50px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+.hd-bulb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+.hd-bulb.red { background: #ff4848; box-shadow: 0 0 8px #ff4848; }
+.hd-bulb.yellow { background: #ffd000; box-shadow: 0 0 8px #ffd000; animation: hd-yellow-blink 1.6s infinite; }
+.hd-bulb.green { background: #5cd684; box-shadow: 0 0 8px #5cd684; }
+@keyframes hd-yellow-blink {
+  0%, 50%, 100% { opacity: 1; }
+  60%, 90% { opacity: 0.35; box-shadow: none; }
+}
+
+/* 树和路锥装饰 */
+.home-deco-tree {
+  position: absolute;
+  font-size: 38px;
+  z-index: 2;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.12));
+}
+.home-deco-tree.tree-l { top: 50%; left: 12px; animation: tree-sway 4s ease-in-out infinite; }
+.home-deco-tree.tree-r { top: 56%; right: 12px; font-size: 32px; animation: tree-sway 5s ease-in-out infinite reverse; }
+@keyframes tree-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+.home-deco-cone {
+  position: absolute;
+  z-index: 3;
+}
+.home-deco-cone.cone-l { bottom: 22%; left: 14px; }
+.home-deco-cone.cone-r { bottom: 20%; right: 14px; }
+
+/* 草地隐藏（已用 stage 自身 gradient 表达） */
+.home-grass {
+  display: none;
+}
+
+/* 起点跑道 - 道路扁带 */
+.home-runway {
+  position: absolute;
+  bottom: 6%;
+  left: 6%;
+  right: 6%;
+  height: 88px;
+  background:
+    linear-gradient(180deg, #5a5a5a 0%, #3a3a3a 100%);
+  border-radius: 14px;
+  border-top: 3px solid #888;
+  border-bottom: 3px solid #2a2a2a;
+  z-index: 3;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.home-runway::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #fff7a3 0,
+    #fff7a3 18px,
+    transparent 18px,
+    transparent 36px
+  );
+  transform: translateY(-50%);
+}
+.home-runway-stripe {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    #fff 0,
+    #fff 14px,
+    transparent 14px,
+    transparent 28px
+  );
+  display: none;
+}
+
+/* START 旗 - 放在车的左侧不挡车 */
+.home-start-flag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 4;
+  background: linear-gradient(180deg, #ffd700 0%, #ffb800 100%);
+  color: #5a3500;
+  padding: 5px 11px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  box-shadow: 0 3px 0 #b39000, 0 5px 8px rgba(0,0,0,0.15);
+  transform: rotate(-4deg);
+  animation: flag-bounce 1.6s ease-in-out infinite;
+}
+@keyframes flag-bounce {
+  0%, 100% { transform: rotate(-4deg) translateY(0); }
+  50% { transform: rotate(-4deg) translateY(-3px); }
+}
+
+/* 主视觉车 */
+.hero-car-wrap {
+  position: absolute;
+  bottom: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72%;
+  max-width: 300px;
+  z-index: 5;
+  animation: hero-bob 2.4s ease-in-out infinite;
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,0.22));
+}
+@keyframes hero-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-7px); }
+}
+.hero-car-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.hero-headlight {
+  animation: headlight-flash 2.4s ease-in-out infinite;
+  transform-origin: 248px 92px;
+}
+@keyframes headlight-flash {
+  0%, 88%, 100% { opacity: 1; }
+  92% { opacity: 0.4; }
+}
+.hero-wheel {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wheel-spin 1.4s linear infinite;
+}
+
+@keyframes wheel-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 主按钮区 */
+.home-actions {
+  padding: 14px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 10;
+}
+
+.home-main-btn {
+  position: relative;
+  width: 100%;
+  min-height: 78px;
+  padding: 12px 20px;
+  border-radius: 28px;
+  border: none;
+  background: linear-gradient(180deg, #ff7c4f 0%, var(--c-game-primary) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow:
+    0 8px 0 var(--c-game-primary-dark),
+    0 12px 24px rgba(255,86,48,0.35),
+    inset 0 2px 0 rgba(255,255,255,0.4);
+  transition: transform 0.08s, box-shadow 0.08s;
+  cursor: pointer;
+  font-family: inherit;
+  animation: main-btn-pulse 2.4s ease-in-out infinite;
+}
+@keyframes main-btn-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+.home-main-btn:active {
+  transform: translateY(5px) scale(0.99);
+  box-shadow:
+    0 3px 0 var(--c-game-primary-dark),
+    0 6px 12px rgba(255,86,48,0.3),
+    inset 0 2px 0 rgba(255,255,255,0.3);
+  animation: none;
+}
+.home-main-btn .btn-emoji {
+  font-size: 36px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+}
+.home-main-btn .btn-main {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.18);
+}
+.home-main-btn .btn-sub {
+  background: rgba(0,0,0,0.18);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* 小按钮组 */
+.home-mini-btns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.mini-btn {
+  background: #fff;
+  border: 3px solid rgba(0,0,0,0.06);
+  border-radius: 18px;
+  padding: 12px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--c-game-text);
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.12), 0 6px 10px rgba(0,0,0,0.08);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.mini-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.12), 0 3px 6px rgba(0,0,0,0.08);
+}
+.mini-btn .emoji {
+  font-size: 26px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+}
+
+/* 限额卡 */
+.home-limit-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 22px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+.home-limit-card .moon {
+  font-size: 40px;
+  filter: drop-shadow(0 0 6px rgba(105, 87, 161, 0.4));
+}
+.home-limit-card strong {
+  font-size: 17px;
+  color: var(--c-game-text);
+}
+.home-limit-card p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--c-game-soft);
+}
+
+/* =====================================================================
+   关卡内 DrivingLevel
+   ===================================================================== */
+
+.dl-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #6dc7ff;
+  position: relative;
+  overflow: hidden;
+}
+
+.dl-hud {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.92);
+  z-index: 10;
+  border-radius: 0 0 14px 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.dl-exit {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f0eee6;
+  border: none;
+  font-size: 18px;
+  font-weight: 900;
+  color: #555;
+  cursor: pointer;
+}
+.dl-hud-mid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dl-level-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--c-game-text);
+}
+.dl-progress {
+  height: 6px;
+  background: #e8e3d8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.dl-progress-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #5cd684, #4ec9ff);
+  border-radius: 4px;
+  transition: width 0.2s linear;
+}
+.dl-stars {
+  display: flex;
+  gap: 2px;
+  font-size: 16px;
+}
+.dl-stars .on { filter: drop-shadow(0 0 4px #ffd000); }
+.dl-stars .off { opacity: 0.3; filter: grayscale(1); }
+
+/* 舞台 */
+.dl-stage {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #6dc7ff 0%, #b8e8ff 30%, #fff5e6 60%, #97d873 100%);
+  touch-action: none;
+}
+.dl-stage.shake {
+  animation: stage-shake 0.32s;
+}
+@keyframes stage-shake {
+  0%, 100% { transform: translate(0); }
+  25% { transform: translate(-4px, 2px); }
+  75% { transform: translate(4px, -2px); }
+}
+
+/* 路边草地 */
+.dl-grass {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 11%;
+  background:
+    linear-gradient(180deg, #8fd870 0%, #5db04f 100%);
+}
+.dl-grass.left { left: 0; }
+.dl-grass.right { right: 0; }
+
+/* 道路 */
+.dl-road {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 11%;
+  right: 11%;
+  background:
+    linear-gradient(180deg, #4a4a4a 0%, #4a4a4a 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 38px,
+      rgba(255,255,255,0.03) 38px,
+      rgba(255,255,255,0.03) 40px
+    );
+  border-left: 3px solid #fff;
+  border-right: 3px solid #fff;
+}
+.dl-road.frozen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 80, 80, 0.08);
+}
+.dl-lane-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-image: repeating-linear-gradient(
+    0deg,
+    #fff7a3 0,
+    #fff7a3 28px,
+    transparent 28px,
+    transparent 56px
+  );
+  background-size: 100% 56px;
+}
+.dl-lane-line.lane-left { left: 33%; }
+.dl-lane-line.lane-right { left: 66%; }
+
+/* 路边树 */
+.dl-tree {
+  position: absolute;
+  font-size: 28px;
+  z-index: 2;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.15));
+}
+
+/* 玩家车 */
+.dl-player {
+  position: absolute;
+  width: 64px;
+  height: 90px;
+  z-index: 8;
+  pointer-events: none;
+  transition: transform 0.05s linear;
+}
+.dl-player .player-car { width: 100%; height: 100%; }
+.dl-player .player-car.shake {
+  animation: player-bump 0.3s;
+}
+@keyframes player-bump {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px) rotate(-3deg); }
+  60% { transform: translateY(2px) rotate(3deg); }
+}
+
+/* 事件物体通用 */
+.dl-obj {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* 车道指示牌 */
+.dl-lane-sign {
+  background: #ffd000;
+  color: #4a3000;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-weight: 900;
+  text-align: center;
+  box-shadow: 0 4px 0 #b39000;
+  border: 3px solid #fff;
+}
+.dl-lane-num {
+  font-size: 32px;
+  line-height: 1;
+}
+.dl-lane-arrow {
+  font-size: 18px;
+}
+
+/* 红绿灯横杆 */
+.dl-traffic-bar {
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 3px solid #6a6a6a;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+}
+.dl-traffic-bulbs {
+  display: flex;
+  gap: 14px;
+}
+.dl-traffic-bulbs .bulb {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #444;
+}
+.dl-traffic-bulbs .bulb.red { background: #ff4848; box-shadow: 0 0 16px #ff4848; }
+.dl-traffic-bulbs .bulb.yellow { background: #ffd000; box-shadow: 0 0 16px #ffd000; }
+.dl-traffic-bulbs .bulb.green { background: #5cd684; box-shadow: 0 0 16px #5cd684; }
+.dl-traffic-bulbs .bulb.off { background: #444; box-shadow: none; opacity: 0.45; }
+.dl-stop-line {
+  width: 100%;
+  height: 6px;
+  background: #fff;
+}
+
+/* 行人 + 斑马线 */
+.dl-pedestrian-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dl-zebra {
+  width: 100%;
+  height: 36px;
+  background: repeating-linear-gradient(
+    90deg,
+    #fff 0,
+    #fff 14px,
+    transparent 14px,
+    transparent 26px
+  );
+}
+.dl-walker {
+  position: absolute;
+  font-size: 36px;
+  animation: walker-cross 3s linear;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25));
+}
+@keyframes walker-cross {
+  from { transform: translateX(-130px); }
+  to { transform: translateX(130px); }
+}
+
+/* 小朋友等车 */
+.dl-kid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dl-kid-emoji {
+  font-size: 40px;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.18));
+  animation: kid-wave 1.2s ease-in-out infinite;
+}
+@keyframes kid-wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.dl-kid-wave {
+  font-size: 16px;
+  color: #ff5e3a;
+  font-weight: 900;
+}
+
+/* P 车位 */
+.dl-parking {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.dl-park-slot {
+  flex: 1;
+  height: 80px;
+  border: 4px dashed #fff7a3;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.4);
+  color: #fff7a3;
+  font-size: 32px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dl-park-slot.target {
+  border-color: #5cd684;
+  color: #5cd684;
+  background: rgba(0, 60, 0, 0.4);
+  animation: park-pulse 1.4s ease-in-out infinite;
+}
+@keyframes park-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(92, 214, 132, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(92, 214, 132, 0); }
+}
+
+/* 终点门 */
+.dl-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffd000;
+  color: #4a3000;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-weight: 900;
+  font-size: 18px;
+  border: 3px solid #fff;
+  box-shadow: 0 6px 0 #b39000;
+}
+.dl-gate span:first-child, .dl-gate span:last-child {
+  font-size: 24px;
+}
+
+/* 学校 */
+.dl-school {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(180deg, #ff9eb6 0%, #ff7a96 100%);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 18px;
+  font-weight: 900;
+  font-size: 18px;
+  border: 3px solid #fff;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 0 rgba(0,0,0,0.18);
+}
+.dl-school span:first-child {
+  font-size: 36px;
+  text-shadow: none;
+}
+
+/* 关卡介绍 */
+.dl-intro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.35);
+  z-index: 30;
+  animation: dl-intro-fade 0.3s ease-out;
+}
+@keyframes dl-intro-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.dl-intro-card {
+  background: #fff;
+  padding: 22px 26px;
+  border-radius: 22px;
+  text-align: center;
+  max-width: 78%;
+  animation: dl-intro-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.25);
+}
+@keyframes dl-intro-pop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.dl-intro-num {
+  font-size: 14px;
+  color: var(--c-game-soft);
+  font-weight: 800;
+}
+.dl-intro-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--c-game-primary);
+  margin: 4px 0 8px;
+}
+.dl-intro-text {
+  font-size: 15px;
+  color: var(--c-game-text);
+  line-height: 1.5;
+}
+
+/* Toast */
+.dl-toast {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.78);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  z-index: 25;
+  white-space: nowrap;
+  animation: dl-toast-pop 0.3s ease-out;
+}
+@keyframes dl-toast-pop {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* 完成闪光 */
+.dl-finish-flash {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 235, 100, 0.4);
+  z-index: 35;
+  animation: dl-finish 0.7s ease-out;
+}
+.dl-finish-flash span {
+  font-size: 100px;
+  filter: drop-shadow(0 0 20px gold);
+}
+@keyframes dl-finish {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* =====================================================================
+   关卡通关 LevelComplete
+   ===================================================================== */
+
+.lc-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: linear-gradient(180deg, #6dc7ff 0%, #fff5e6 100%);
+}
+.lc-card {
+  background: #fff;
+  border-radius: 28px;
+  padding: 26px 22px 22px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.2);
+  animation: lc-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes lc-pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.lc-burst {
+  font-size: 64px;
+  margin-bottom: 6px;
+  animation: lc-burst-bounce 1s ease-in-out infinite;
+  display: inline-block;
+}
+@keyframes lc-burst-bounce {
+  0%, 100% { transform: scale(1) rotate(-6deg); }
+  50% { transform: scale(1.12) rotate(6deg); }
+}
+.lc-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--c-game-primary);
+  margin: 4px 0 2px;
+}
+.lc-subtitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-game-soft);
+  margin: 0 0 12px;
+}
+.lc-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  font-size: 44px;
+  margin: 8px 0 14px;
+}
+.lc-stars .on {
+  filter: drop-shadow(0 0 12px #ffd000);
+  animation: star-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+.lc-stars .on:nth-child(1) { animation-delay: 0.1s; }
+.lc-stars .on:nth-child(2) { animation-delay: 0.25s; }
+.lc-stars .on:nth-child(3) { animation-delay: 0.4s; }
+.lc-stars .off { opacity: 0.25; filter: grayscale(1); }
+@keyframes star-pop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.lc-learn {
+  background: #f4faff;
+  border: 2px solid #cce8ff;
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin: 10px 0;
+}
+.lc-learn-label {
+  font-size: 12px;
+  color: #4a9ff0;
+  font-weight: 800;
+}
+.lc-learn-text {
+  font-size: 16px;
+  color: var(--c-game-text);
+  margin: 4px 0 0;
+  line-height: 1.5;
+  font-weight: 700;
+}
+.lc-sticker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff7e0;
+  border-radius: 16px;
+  padding: 10px;
+  margin: 10px 0;
+  animation: lc-sticker-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes lc-sticker-pop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.lc-sticker-emoji {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.lc-sticker-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--c-game-text);
+}
+.lc-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lc-primary {
+  width: 100%;
+  min-height: 60px;
+  border: none;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ff7c4f 0%, var(--c-game-primary) 100%);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  font-family: inherit;
+  box-shadow: 0 6px 0 var(--c-game-primary-dark), 0 8px 14px rgba(255,86,48,0.3);
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+  letter-spacing: 1px;
+}
+.lc-primary:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 var(--c-game-primary-dark), 0 4px 8px rgba(255,86,48,0.3);
+}
+.lc-secondary-row {
+  display: flex;
+  gap: 8px;
+}
+.lc-secondary {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: 18px;
+  background: #fff7e0;
+  color: #5a3500;
+  font-size: 15px;
+  font-weight: 800;
+  font-family: inherit;
+  box-shadow: 0 4px 0 #d9b860;
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.lc-secondary.ghost {
+  background: #f0eee6;
+  color: #5a4a3a;
+  box-shadow: 0 4px 0 #c0bcaf;
+}
+.lc-secondary:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #d9b860;
+}
+.lc-secondary.ghost:active {
+  box-shadow: 0 2px 0 #c0bcaf;
+}
+
+/* =====================================================================
+   选关 LevelSelect
+   ===================================================================== */
+
+.ls-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px 18px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #6dc7ff 0%, #fff5e6 100%);
+}
+.ls-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.ls-back {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+}
+.ls-header h1 {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 22px;
+  color: var(--c-game-text);
+}
+.ls-spacer { width: 38px; }
+.ls-desc {
+  text-align: center;
+  font-size: 14px;
+  color: var(--c-game-soft);
+  margin: 4px 0 14px;
+}
+.ls-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.ls-cell {
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px 10px 12px;
+  text-align: center;
+  font-family: inherit;
+  border: 4px solid transparent;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.12), 0 6px 10px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+  position: relative;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.ls-cell.unlocked { border-color: var(--c-game-yellow); }
+.ls-cell.locked {
+  background: #f3efe9;
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: 0 4px 0 #ccc;
+}
+.ls-cell:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.12), 0 3px 6px rgba(0,0,0,0.06);
+}
+.ls-num {
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--c-game-primary);
+  line-height: 1;
+}
+.ls-cell.locked .ls-num { color: #aaa; }
+.ls-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--c-game-text);
+}
+.ls-stars {
+  display: flex;
+  gap: 2px;
+  font-size: 14px;
+}
+.ls-stars .on { filter: drop-shadow(0 0 3px #ffd000); }
+.ls-stars .off { opacity: 0.3; filter: grayscale(1); }
+.ls-lock {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 16px;
+}
+
+/* =====================================================================
+   小游戏盒 占位
+   ===================================================================== */
+
+.mg-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #6dc7ff 0%, #fff5e6 100%);
+}
+.mg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.mg-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.12), 0 6px 10px rgba(0,0,0,0.06);
+  position: relative;
+}
+.mg-card.coming-soon {
+  opacity: 0.85;
+}
+.mg-emoji { font-size: 36px; }
+.mg-name {
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 4px;
+  color: var(--c-game-text);
+}
+.mg-tag {
+  font-size: 11px;
+  color: var(--c-game-soft);
+  margin-top: 2px;
+}
+.mg-soon {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--c-game-yellow-dark);
+  background: #fff7e0;
+  border-radius: 8px;
+  padding: 3px 6px;
+  display: inline-block;
+}
+
+/* 小屏适配 (375 以下，例如 iPhone SE) */
+@media (max-height: 750px) {
+  .home-stage { min-height: 280px; }
+  .hero-car-wrap { width: 56%; bottom: 10%; }
+  .home-main-btn { min-height: 70px; }
+  .home-main-btn .btn-emoji { font-size: 30px; }
+  .home-main-btn .btn-main { font-size: 22px; }
+}
+

@@ -9,106 +9,138 @@ interface ParentSettingsProps {
   onBack: () => void;
 }
 
-const DAILY_MINUTE_OPTIONS = [10, 15, 20];
-const REST_AFTER_OPTIONS = [3, 5, 8];
+const MINUTES_OPTIONS = [10, 15, 20];
+const REST_OPTIONS = [3, 5, 8];
 
 export default function ParentSettings({ config, onSave, onBack }: ParentSettingsProps) {
-  const [draft, setDraft] = useState(config);
+  const [draft, setDraft] = useState<ParentConfig>(config);
   const [usage, setUsage] = useState(() => getDailyUsage());
-  const records = loadLearningRecords().slice(0, 6);
+  const [records] = useState(() => loadLearningRecords().slice(0, 5));
   const voiceOk = isVoiceSupported();
 
-  const resetToday = () => {
+  const save = () => {
+    onSave(draft);
+    onBack();
+  };
+
+  const handleVoiceTest = () => {
+    speak('你好，我是小司机的语音老师。');
+  };
+
+  const handleResetUsage = () => {
     resetDailyUsage();
     setUsage(getDailyUsage());
   };
 
   return (
-    <main className="panel-screen parent-page">
-      <header className="panel-header">
-        <button onClick={onBack} type="button">返回</button>
-        <h1>家长设置</h1>
-        <span>长按入口</span>
-      </header>
+    <main className="parent-page">
+      <h2>家长设置</h2>
 
-      <section className="parent-card">
-        <h2>每天最多玩多久</h2>
-        <div className="setting-pills">
-          {DAILY_MINUTE_OPTIONS.map((minutes) => (
-            <button
-              key={minutes}
-              className={draft.dailyMinutes === minutes ? 'active' : ''}
-              onClick={() => setDraft({ ...draft, dailyMinutes: minutes })}
-              type="button"
+      <div className="parent-card">
+        <h3>每天最多玩多久</h3>
+        <div className="task-count-row">
+          {MINUTES_OPTIONS.map((n) => (
+            <div
+              key={n}
+              className={`count-pill ${draft.dailyMinutes === n ? 'active' : ''}`}
+              onClick={() => setDraft({ ...draft, dailyMinutes: n })}
             >
-              {minutes} 分钟
-            </button>
+              {n} 分钟
+            </div>
           ))}
         </div>
-        <p>今天已玩 {Math.floor(usage.seconds / 60)} 分钟，完成 {usage.completedLevels} 关。</p>
-        <button className="small-text-btn" onClick={resetToday} type="button">重置今天记录</button>
-      </section>
-
-      <section className="parent-card">
-        <h2>连续几关后休息</h2>
-        <div className="setting-pills">
-          {REST_AFTER_OPTIONS.map((count) => (
+        <p>
+          今天已玩 {Math.floor(usage.seconds / 60)} 分钟 · {usage.completedLevels} 关。
+          {usage.seconds > 0 && (
             <button
-              key={count}
-              className={draft.restAfterLevels === count ? 'active' : ''}
-              onClick={() => setDraft({ ...draft, restAfterLevels: count })}
+              className="link-btn inline"
+              onClick={handleResetUsage}
               type="button"
             >
-              {count} 关
+              重置今天
             </button>
+          )}
+        </p>
+      </div>
+
+      <div className="parent-card">
+        <h3>连续多少关后强制休息</h3>
+        <div className="task-count-row">
+          {REST_OPTIONS.map((n) => (
+            <div
+              key={n}
+              className={`count-pill ${draft.restAfterLevels === n ? 'active' : ''}`}
+              onClick={() => setDraft({ ...draft, restAfterLevels: n })}
+            >
+              {n} 关
+            </div>
           ))}
         </div>
-        <p>到达后会进入 20 秒休息页，提醒喝水、看远处。</p>
-      </section>
+        <p>休息页至少停留 20 秒，保护眼睛。</p>
+      </div>
 
-      <section className="parent-card">
-        <h2>语音提示</h2>
-        <label className="voice-row">
+      <div className="parent-card">
+        <h3>儿童语音播报</h3>
+        <label className="voice-toggle">
           <input
             type="checkbox"
             checked={draft.voiceEnabled}
             disabled={!voiceOk}
-            onChange={(event) => setDraft({ ...draft, voiceEnabled: event.target.checked })}
+            onChange={(e) => setDraft({ ...draft, voiceEnabled: e.target.checked })}
           />
-          <span>开启简单语音提示</span>
+          <span>开启语音提示</span>
         </label>
-        <button
-          className="small-text-btn"
-          onClick={() => speak('小小汽车驾驶大师，准备出发啦！')}
-          type="button"
-        >
-          测试语音
-        </button>
-      </section>
-
-      <section className="parent-card">
-        <h2>学习记录</h2>
-        {records.length === 0 ? (
-          <p>还没有通关记录。</p>
+        {voiceOk ? (
+          <p>
+            使用浏览器自带语音合成，无需联网。
+            <button className="link-btn inline" onClick={handleVoiceTest} type="button">
+              测试一下
+            </button>
+          </p>
         ) : (
-          <ul className="learning-list">
-            {records.map((record, index) => (
-              <li key={`${record.date}-${record.level}-${index}`}>
-                第 {record.level} 关：{record.summary}
+          <p>当前浏览器不支持语音合成，可以关闭此选项。</p>
+        )}
+      </div>
+
+      <div className="parent-card">
+        <h3>休息提醒文字</h3>
+        <textarea
+          className="parent-textarea"
+          value={draft.reminder}
+          onChange={(e) => setDraft({ ...draft, reminder: e.target.value })}
+          maxLength={80}
+        />
+        <p>每次强制休息时显示。</p>
+      </div>
+
+      {records.length > 0 && (
+        <div className="parent-card">
+          <h3>最近学习记录</h3>
+          <ul className="parent-info-list">
+            {records.map((r, i) => (
+              <li key={i}>
+                {r.date} 第 {r.level} 关：{r.summary}
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </div>
+      )}
 
-      <section className="parent-card">
-        <h2>安全说明</h2>
-        <p>本游戏无广告、无充值、无排行榜、无抽奖、无金币雨。</p>
-      </section>
+      <div className="parent-card">
+        <h3>关于本游戏</h3>
+        <ul className="parent-info-list">
+          <li>无广告</li>
+          <li>无充值</li>
+          <li>无排行榜</li>
+          <li>无抽奖、无诱导分享</li>
+          <li>每天有时长限制，自动提醒休息</li>
+          <li>贴纸只展示，不刺激、不分稀有度</li>
+        </ul>
+      </div>
 
-      <div className="parent-actions">
-        <button onClick={onBack} type="button">取消</button>
-        <button className="master-start-btn" onClick={() => onSave(draft)} type="button">保存</button>
+      <div className="btn-row" style={{ marginTop: 'auto', paddingTop: 18 }}>
+        <button className="btn btn-ghost" onClick={onBack}>取消</button>
+        <button className="btn btn-secondary" onClick={save}>保存</button>
       </div>
     </main>
   );

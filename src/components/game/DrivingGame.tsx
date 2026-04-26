@@ -42,7 +42,7 @@ export default function DrivingGame({
   onFinish,
 }: DrivingGameProps) {
   const events = useMemo(
-    () => createDrivingEvents(config.totalTasks),
+    () => createDrivingEvents(config.totalTasks ?? 5),
     [config.totalTasks],
   );
   const drag = useDragCar({ minX: 28, maxX: 72, initialX: 50 });

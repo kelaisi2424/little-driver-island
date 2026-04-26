@@ -1,17 +1,17 @@
+// 主流程：home → play → complete → (rest 每 N 关) → home / 下一关
+// 配套页面：level-select / parent / stickers / minigames
+
 import { useEffect, useMemo, useState } from 'react';
 import type {
-  CarDefinition,
-  CarId,
-  DrivingCompletePayload,
-  DrivingLevel,
-  DrivingScreen,
   ParentConfig,
+  PlayCompletePayload,
+  PlayLevel,
+  PlayProgress,
+  Screen,
 } from './types';
-import { getCar } from './data/cars';
-import { DRIVING_LEVELS, getDrivingLevel } from './data/levels';
+import { PLAY_LEVELS, TOTAL_LEVELS, getPlayLevel } from './data/playLevels';
 import { useDailyUsage } from './hooks/useDailyUsage';
-import { setVoiceEnabled, speak } from './utils/speech';
-import { getMuted, playSound, toggleMuted } from './utils/sound';
+import { setVoiceEnabled } from './utils/speech';
 import {
   addLearningRecord,
   loadConfig,
@@ -20,30 +20,24 @@ import {
   updateLevelProgress,
 } from './utils/storage';
 import { awardSticker, type Sticker } from './utils/stickers';
-import { EMPTY_CONTROLS, type ControlState } from './game/physics';
-import GarageHome from './components/GarageHome';
-import CarSelect from './components/CarSelect';
+import HomePage from './components/HomePage';
 import LevelSelect from './components/LevelSelect';
-import MissionPopup from './components/MissionPopup';
-import GameHUD from './components/GameHUD';
-import ControlPad from './components/ControlPad';
-import DrivingCanvas from './game/DrivingCanvas';
 import LevelComplete from './components/LevelComplete';
 import RestPage from './components/RestPage';
 import ParentSettings from './components/ParentSettings';
 import StickerBook from './components/StickerBook';
+import MinigamesPage from './components/MinigamesPage';
+import DrivingLevel from './game/DrivingLevel';
 
 const DEFAULT_CONFIG: ParentConfig = {
-  totalTasks: 5,
-  reminder: '眼睛休息一下，去喝口水，看看远处吧。',
   voiceEnabled: true,
-  dailyLimit: 3,
   dailyMinutes: 15,
   restAfterLevels: 5,
+  reminder: '眼睛休息一下，去喝口水，看看远处吧。',
 };
 
-function normalizeConfig(config: Partial<ParentConfig>): ParentConfig {
-  const merged = { ...DEFAULT_CONFIG, ...config };
+function normalizeConfig(input: Partial<ParentConfig>): ParentConfig {
+  const merged = { ...DEFAULT_CONFIG, ...input };
   return {
     ...merged,
     dailyMinutes: [10, 15, 20].includes(merged.dailyMinutes) ? merged.dailyMinutes : 15,
@@ -55,24 +49,22 @@ function loadInitialConfig(): ParentConfig {
   return normalizeConfig(loadConfig() ?? {});
 }
 
-function getUnlockedLevel(): number {
-  const progress = loadProgress();
-  return Math.min(DRIVING_LEVELS.length, progress.driving?.currentLevel ?? 1);
+function loadPlayProgress(): PlayProgress {
+  const all = loadProgress();
+  const rec = all.driving;
+  return {
+    currentLevel: Math.min(TOTAL_LEVELS, rec?.currentLevel ?? 1),
+    stars: (rec?.stars as PlayProgress['stars']) ?? {},
+  };
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<DrivingScreen>('garage');
-  const [config, setConfig] = useState<ParentConfig>(loadInitialConfig);
-  const [selectedCarId, setSelectedCarId] = useState<CarId>('red-car');
-  const [activeLevel, setActiveLevel] = useState<DrivingLevel>(() => getDrivingLevel(getUnlockedLevel()));
+  const [screen, setScreen] = useState<Screen>('home');
+  const [config, setConfigState] = useState<ParentConfig>(loadInitialConfig);
   const [progressVersion, setProgressVersion] = useState(0);
-  const [result, setResult] = useState<DrivingCompletePayload | null>(null);
+  const [activeLevel, setActiveLevel] = useState<PlayLevel | null>(null);
+  const [lastResult, setLastResult] = useState<PlayCompletePayload | null>(null);
   const [newSticker, setNewSticker] = useState<Sticker | null>(null);
-  const [controls, setControls] = useState<ControlState>(EMPTY_CONTROLS);
-  const [speed, setSpeed] = useState(0);
-  const [stars, setStars] = useState(0);
-  const [muted, setMuted] = useState(getMuted);
-  const [paused, setPaused] = useState(false);
   const [sessionLevels, setSessionLevels] = useState(0);
   const usage = useDailyUsage(config.dailyMinutes);
 
@@ -81,190 +73,147 @@ export default function App() {
     setVoiceEnabled(config.voiceEnabled);
   }, [config]);
 
-  const selectedCar = getCar(selectedCarId);
-  const progress = useMemo(() => loadProgress(), [progressVersion]);
-  const currentLevel = Math.min(DRIVING_LEVELS.length, progress.driving?.currentLevel ?? 1);
-  const nextLevel = getDrivingLevel(currentLevel);
+  // 每次状态变化时重新读 progress
+  const progress = useMemo(() => loadPlayProgress(), [progressVersion]);
 
-  const refreshProgress = () => setProgressVersion((value) => value + 1);
+  const refreshProgress = () => setProgressVersion((v) => v + 1);
 
-  const selectCar = (car: CarDefinition) => {
-    playSound('click');
-    setSelectedCarId(car.id);
-    setScreen('garage');
-  };
-
-  const startLevel = (level: DrivingLevel) => {
+  const startLevel = (levelId: number) => {
     if (usage.limitReached) return;
-    playSound('click');
-    setActiveLevel(level);
-    setStars(0);
-    setSpeed(0);
-    setControls(EMPTY_CONTROLS);
-    setPaused(false);
-    setScreen('mission');
-    if (config.voiceEnabled && level.id === 1) {
-      speak('按住油门，方向键转弯。');
-    }
+    setActiveLevel(getPlayLevel(levelId));
+    setNewSticker(null);
+    setScreen('play');
   };
 
-  const completeLevel = (payload: DrivingCompletePayload) => {
+  const handleStartFromHome = () => {
+    startLevel(progress.currentLevel);
+  };
+
+  const completeLevel = (payload: PlayCompletePayload) => {
+    if (!activeLevel) return;
     usage.addUsage(payload.elapsedSeconds);
-    updateLevelProgress('driving', payload.level.id, payload.stars);
+    updateLevelProgress('driving', payload.levelId, payload.stars);
     addLearningRecord({
       gameId: 'driving',
-      level: payload.level.id,
-      learningGoal: payload.level.learningGoal,
-      summary: payload.level.summary,
+      level: payload.levelId,
+      learningGoal: activeLevel.title,
+      summary: activeLevel.summary,
     });
-    setSessionLevels((value) => value + 1);
-    setResult(payload);
-    setNewSticker(payload.level.stickerId ? awardSticker(payload.level.stickerId) : null);
+    setSessionLevels((v) => v + 1);
+    setLastResult(payload);
+    setNewSticker(activeLevel.stickerId ? awardSticker(activeLevel.stickerId) : null);
     refreshProgress();
     setScreen('complete');
   };
 
-  const nextFromComplete = () => {
-    if (!result) {
-      setScreen('garage');
+  const goNextFromComplete = () => {
+    if (!lastResult || !activeLevel) {
+      setScreen('home');
       return;
     }
+    // 强制休息
     if (sessionLevels >= config.restAfterLevels) {
       setSessionLevels(0);
       setScreen('rest');
       return;
     }
-    const nextId = Math.min(DRIVING_LEVELS.length, result.level.id + 1);
-    startLevel(getDrivingLevel(nextId));
+    // 最后一关 → 回首页
+    if (activeLevel.id >= TOTAL_LEVELS) {
+      setScreen('home');
+      return;
+    }
+    startLevel(activeLevel.id + 1);
   };
 
-  const setControl = (key: keyof ControlState, pressed: boolean) => {
-    setControls((value) => ({ ...value, [key]: pressed }));
-  };
-
-  const toggleSound = () => {
-    const next = toggleMuted();
-    setMuted(next);
-    if (!next) playSound('click');
+  const retryLevel = () => {
+    if (!activeLevel) return;
+    startLevel(activeLevel.id);
   };
 
   const saveParentConfig = (next: ParentConfig) => {
-    setConfig(normalizeConfig(next));
+    setConfigState(normalizeConfig(next));
     usage.refresh();
-    setScreen('garage');
+    setScreen('home');
   };
 
   return (
     <div className="app driving-app">
-      <div className="portrait-rotate">
-        <div className="rotate-card">
-          <div>📱➡️</div>
-          <h1>请把手机横过来</h1>
-          <p>小司机准备出发啦！</p>
+      {screen === 'home' && (
+        <HomePage
+          nextLevelId={progress.currentLevel}
+          totalLevels={TOTAL_LEVELS}
+          usedSeconds={usage.usage.seconds}
+          limitMinutes={config.dailyMinutes}
+          completedLevels={usage.usage.completedLevels}
+          limitReached={usage.limitReached}
+          onStart={handleStartFromHome}
+          onLevels={() => setScreen('level-select')}
+          onStickers={() => setScreen('stickers')}
+          onMinigames={() => setScreen('minigames')}
+          onParent={() => setScreen('parent')}
+        />
+      )}
+
+      {screen === 'level-select' && (
+        <LevelSelect
+          progress={progress}
+          onPick={(id) => startLevel(id)}
+          onBack={() => setScreen('home')}
+        />
+      )}
+
+      {screen === 'play' && activeLevel && (
+        <DrivingLevel
+          key={`${activeLevel.id}-${progressVersion}`}
+          level={activeLevel}
+          onComplete={completeLevel}
+          onExit={() => {
+            setSessionLevels(0);
+            setScreen('home');
+          }}
+        />
+      )}
+
+      {screen === 'complete' && lastResult && activeLevel && (
+        <LevelComplete
+          level={activeLevel}
+          result={lastResult}
+          sticker={newSticker}
+          needRest={sessionLevels >= config.restAfterLevels}
+          isLastLevel={activeLevel.id >= TOTAL_LEVELS}
+          onNext={goNextFromComplete}
+          onRetry={retryLevel}
+          onHome={() => {
+            setSessionLevels(0);
+            setScreen('home');
+          }}
+        />
+      )}
+
+      {screen === 'rest' && <RestPage onDone={() => setScreen('home')} />}
+
+      {screen === 'parent' && (
+        <ParentSettings
+          config={config}
+          onSave={saveParentConfig}
+          onBack={() => setScreen('home')}
+        />
+      )}
+
+      {screen === 'stickers' && (
+        <StickerBook onBack={() => setScreen('home')} />
+      )}
+
+      {screen === 'minigames' && (
+        <MinigamesPage onBack={() => setScreen('home')} />
+      )}
+
+      {/* 兜底：如果 PLAY_LEVELS 为空（防御性）*/}
+      {screen === 'home' && PLAY_LEVELS.length === 0 && (
+        <div style={{ padding: 30, textAlign: 'center' }}>
+          <p>关卡数据缺失，请检查 data/playLevels.ts</p>
         </div>
-      </div>
-
-      <div className="driving-master">
-        {screen === 'garage' && (
-          <GarageHome
-            car={selectedCar}
-            nextLevel={nextLevel}
-            usedSeconds={usage.usage.seconds}
-            limitSeconds={usage.limitSeconds}
-            completedLevels={usage.usage.completedLevels}
-            limitReached={usage.limitReached}
-            onStart={() => startLevel(nextLevel)}
-            onLevels={() => setScreen('level-select')}
-            onCars={() => setScreen('car-select')}
-            onStickers={() => setScreen('stickers')}
-            onParent={() => setScreen('parent')}
-          />
-        )}
-
-        {screen === 'car-select' && (
-          <CarSelect
-            selectedCarId={selectedCarId}
-            onSelect={selectCar}
-            onBack={() => setScreen('garage')}
-          />
-        )}
-
-        {screen === 'level-select' && (
-          <LevelSelect
-            currentLevel={currentLevel}
-            getStars={(levelId) => progress.driving?.stars[String(levelId)] ?? 0}
-            onStartLevel={startLevel}
-            onBack={() => setScreen('garage')}
-          />
-        )}
-
-        {screen === 'mission' && (
-          <MissionPopup
-            level={activeLevel}
-            onStart={() => {
-              playSound('engine');
-              setScreen('drive');
-            }}
-            onBack={() => setScreen('garage')}
-          />
-        )}
-
-        {screen === 'drive' && (
-          <main className="drive-screen">
-            <GameHUD
-              level={activeLevel}
-              stars={stars}
-              speed={speed}
-              usedSeconds={usage.usage.seconds}
-              muted={muted}
-              onPause={() => setPaused((value) => !value)}
-              onToggleMute={toggleSound}
-            />
-            <DrivingCanvas
-              level={activeLevel}
-              car={selectedCar}
-              controls={controls}
-              paused={paused}
-              onSpeedChange={setSpeed}
-              onStarsChange={setStars}
-              onComplete={completeLevel}
-            />
-            <ControlPad controls={controls} setControl={setControl} />
-            {paused && (
-              <div className="pause-panel">
-                <section>
-                  <h2>暂停一下</h2>
-                  <button className="master-start-btn" onClick={() => setPaused(false)} type="button">继续驾驶</button>
-                  <button onClick={() => setScreen('garage')} type="button">回到车库</button>
-                </section>
-              </div>
-            )}
-          </main>
-        )}
-
-        {screen === 'complete' && result && (
-          <LevelComplete
-            result={result}
-            sticker={newSticker}
-            needRest={sessionLevels >= config.restAfterLevels}
-            onNext={nextFromComplete}
-            onRetry={() => startLevel(result.level)}
-            onHome={() => setScreen('garage')}
-          />
-        )}
-
-        {screen === 'rest' && <RestPage onDone={() => setScreen('garage')} />}
-
-        {screen === 'parent' && (
-          <ParentSettings
-            config={config}
-            onSave={saveParentConfig}
-            onBack={() => setScreen('garage')}
-          />
-        )}
-
-        {screen === 'stickers' && <StickerBook onBack={() => setScreen('garage')} />}
-      </div>
+      )}
     </div>
   );
 }

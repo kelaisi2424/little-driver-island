@@ -1,11 +1,76 @@
+// ===== 主闯关模式（核心，重构重点） =====
+
+// 应用页面状态机
 export type Screen =
   | 'home'
   | 'level-select'
-  | 'game'
+  | 'play'
   | 'complete'
   | 'rest'
   | 'parent'
-  | 'stickers';
+  | 'stickers'
+  | 'minigames';
+
+// 关卡的核心机制类型
+export type LevelKind =
+  | 'drive'         // 自由开（直路到终点）
+  | 'dodge'         // 躲障碍（路锥）
+  | 'lane'          // 走指定数字车道
+  | 'wait-light'    // 红灯停 / 绿灯行
+  | 'park'          // 停进 P 车位
+  | 'pedestrian'    // 让行人
+  | 'pickup'        // 接小朋友
+  | 'arrive';       // 综合：安全到达
+
+// 关卡定义
+export interface PlayLevel {
+  id: number;                   // 1..10
+  title: string;                // 第 1 关名字
+  intro: string;                // 关卡开始前一句提示
+  summary: string;              // 通关后一句学习总结
+  kind: LevelKind;
+  duration: number;             // 关卡时长（秒）
+  // kind 相关参数
+  targetLane?: 0 | 1 | 2;       // lane 关卡: 必须停留的车道 (0左 1中 2右)
+  targetNumber?: number;        // lane 关卡: 显示的数字
+  pickupCount?: number;         // pickup 关卡: 要接的小朋友数
+  stickerId?: string;           // 通关奖励贴纸（可选）
+}
+
+// 关卡通关回调载荷
+export interface PlayCompletePayload {
+  levelId: number;
+  stars: number;
+  elapsedSeconds: number;
+}
+
+// ===== 家长设置 =====
+
+export interface ParentConfig {
+  voiceEnabled: boolean;
+  dailyMinutes: number;         // 每日时长（10/15/20）
+  restAfterLevels: number;      // 连续 N 关后强制休息（3/5/8）
+  reminder: string;             // 休息页文字
+  // 兼容字段（不再使用，留着别让旧文件爆掉）
+  totalTasks?: number;
+  dailyLimit?: number;
+}
+
+// ===== 关卡选择 / 进度 =====
+
+export interface LevelStars {
+  [levelId: string]: number;    // 每关获得的星星数
+}
+
+export interface PlayProgress {
+  currentLevel: number;         // 解锁到第几关（1..10）
+  stars: LevelStars;
+}
+
+// ====================================================================
+// 以下为旧类型，仅为旧代码（mini-games / canvas）保留编译兼容
+// 主闯关流程不再使用
+// ====================================================================
 
 export type DrivingScreen =
   | 'garage'
@@ -21,12 +86,7 @@ export type DrivingScreen =
 export type CarId = 'red-car' | 'blue-car' | 'yellow-bus' | 'green-truck';
 
 export type DrivingLevelType =
-  | 'starter'
-  | 'parking'
-  | 'traffic'
-  | 'bus'
-  | 'curve'
-  | 'school';
+  | 'starter' | 'parking' | 'traffic' | 'bus' | 'curve' | 'school';
 
 export type GameId =
   | 'parking-move'
@@ -62,15 +122,6 @@ export interface LevelCompletePayload {
   stickerId?: string;
   learningGoal: string;
   summary: string;
-}
-
-export interface ParentConfig {
-  totalTasks: number;
-  reminder: string;
-  voiceEnabled: boolean;
-  dailyLimit: number;
-  dailyMinutes: number;
-  restAfterLevels: number;
 }
 
 export interface CarDefinition {
@@ -111,22 +162,15 @@ export interface LevelGameProps {
   onFail?: () => void;
 }
 
-// Legacy mini-game files are kept in the repo during the transition.
 export interface MiniGameProps {
   onComplete: (payload: Record<string, unknown>) => void;
 }
 
-// Legacy task-game types retained so older components still type-check.
 export type GameMode = 'learning' | 'game';
 
 export type TaskType =
-  | 'traffic-light'
-  | 'parking'
-  | 'color-repair'
-  | 'crosswalk'
-  | 'pedestrian'
-  | 'red-light'
-  | 'seatbelt';
+  | 'traffic-light' | 'parking' | 'color-repair'
+  | 'crosswalk' | 'pedestrian' | 'red-light' | 'seatbelt';
 
 export interface TaskComponentProps {
   onComplete: () => void;
