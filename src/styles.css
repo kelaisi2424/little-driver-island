@@ -9514,3 +9514,309 @@ html, body {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(330%); }
 }
+
+/* =====================================================================
+   v9 — 100 关章节系统 UI
+   ===================================================================== */
+
+/* ChapterSelect 章节选关页 */
+.chapter-select-page, .lsc-page {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #6dc7ff 0%, #c8efff 35%, #fff5e6 60%, #97d873 100%);
+  padding: max(14px, env(safe-area-inset-top, 14px)) 14px max(14px, env(safe-area-inset-bottom, 14px));
+  overflow-y: auto;
+  z-index: 50;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.cs-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.cs-header h1 {
+  flex: 1;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: #ff5e3a;
+  text-shadow: 2px 2px 0 #fff, 4px 4px 0 rgba(0,0,0,0.06);
+  margin: 0;
+  letter-spacing: 1px;
+}
+.cs-back, .cs-spacer {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+}
+.cs-back {
+  border: 3px solid #2d1612;
+  background: linear-gradient(180deg, #fff, #f3eddf);
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #c0bcaf;
+}
+.cs-back:active { transform: translateY(2px); box-shadow: 0 2px 0 #c0bcaf; }
+.cs-desc {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6c5e54;
+  margin: 0 0 14px;
+}
+
+.cs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.cs-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 3px solid #2d1612;
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--ch-color, #6dc7ff) 0%, color-mix(in srgb, var(--ch-color, #6dc7ff) 65%, #000 35%) 100%);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.18), 0 8px 14px rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.4);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.cs-card:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.18), 0 4px 8px rgba(0,0,0,0.15);
+}
+.cs-card.is-locked {
+  filter: grayscale(0.7) brightness(0.65);
+  cursor: not-allowed;
+}
+.cs-card-emoji {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.25);
+  border: 2.5px solid rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.cs-card-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cs-card-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.92;
+}
+.cs-lock { font-size: 16px; }
+.cs-card-title {
+  font-size: 18px;
+  font-weight: 900;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.18);
+  line-height: 1.2;
+}
+.cs-card-sub {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.88;
+}
+.cs-card-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.cs-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.4);
+}
+.cs-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ffd54a, #ff7a45);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.cs-card-sticker {
+  flex-shrink: 0;
+}
+.cs-sticker-emoji {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 3px solid rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.4), 0 3px 6px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 2px rgba(0,0,0,0.15);
+}
+.cs-card-sticker.is-locked .cs-sticker-emoji {
+  background: #888 !important;
+  filter: grayscale(0.95);
+  opacity: 0.6;
+}
+
+/* LevelSelectChapter 章内 10 关 */
+.lsc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 0 4px;
+}
+.lsc-node {
+  position: relative;
+  padding: 14px 10px 26px;
+  border: 3px solid #2d1612;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffe680 0%, #ffd000 60%, #b87a00 100%);
+  color: #5a3500;
+  font-family: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 6px 0 #b87a00, 0 8px 14px rgba(255,200,0,0.3), inset 0 2px 0 rgba(255,255,255,0.5);
+}
+.lsc-node:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #b87a00;
+}
+.lsc-node.is-locked {
+  background: linear-gradient(180deg, #d4cdc0 0%, #a99f8e 100%);
+  color: #6c5e54;
+  cursor: not-allowed;
+  box-shadow: 0 5px 0 #7d7264;
+}
+.lsc-node.is-current {
+  background: linear-gradient(180deg, #ff9974 0%, #ff5e3a 60%, #c93817 100%);
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+  animation: lsc-glow 1.6s ease-in-out infinite;
+}
+@keyframes lsc-glow {
+  0%, 100% { box-shadow: 0 6px 0 #c93817, 0 0 0 0 rgba(255, 94, 58, 0.5); }
+  50%      { box-shadow: 0 6px 0 #c93817, 0 0 0 14px rgba(255, 94, 58, 0); }
+}
+.lsc-num {
+  font-size: 28px;
+  line-height: 1;
+}
+.lsc-stars {
+  display: flex;
+  gap: 2px;
+  font-size: 12px;
+}
+.lsc-stars .on { filter: drop-shadow(0 0 3px #ffd000); }
+.lsc-stars .off { opacity: 0.3; filter: grayscale(1); }
+.lsc-lock {
+  font-size: 28px;
+}
+.lsc-name {
+  position: absolute;
+  bottom: 6px;
+  left: 4px; right: 4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.18);
+  padding: 2px 4px;
+  border-radius: 8px;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 首页章节卡条 */
+.game3d-chapter-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+.game3d-chapter-strip button {
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 14px;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 900;
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.game3d-chapter-strip button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.game3d-chapter-strip span {
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+.game3d-chapter-strip small {
+  font-size: 11px;
+  opacity: 0.85;
+  font-weight: 700;
+}
+
+/* 通关页章节贴纸解锁 */
+.game3d-chapter-sticker-unlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(180deg, #fff7e0 0%, #ffe19a 100%);
+  border: 3px solid #d4a300;
+  border-radius: 18px;
+  padding: 12px;
+  margin: 12px 0;
+  color: #5a3500;
+  text-align: left;
+  animation: ui-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.game3d-chapter-sticker-unlock .cs-sticker-emoji {
+  width: 56px; height: 56px;
+}
+.game3d-chapter-sticker-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 900;
+}
+.game3d-chapter-sticker-text strong {
+  font-size: 16px;
+}
+.game3d-chapter-sticker-text span {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.8;
+}

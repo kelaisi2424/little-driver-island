@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LEVELS_3D, getLevel3D, type Level3D } from '../../data/levels3d';
+import { CHAPTERS_3D, chapterOfLevel, isChapterEndLevel, type Chapter3D } from '../../data/chapters3d';
 import { useDailyUsage } from '../../hooks/useDailyUsage';
 import type { ParentConfig } from '../../types';
 import { setVoiceEnabled } from '../../utils/speech';
@@ -11,6 +12,7 @@ import {
   saveConfig,
   updateLevelProgress,
 } from '../../utils/storage';
+import { awardSticker } from '../../utils/stickers';
 import DrivingScene from '../../three/DrivingScene';
 import { useDrivingControls } from '../../three/useDrivingControls';
 import ParentSettings from '../ParentSettings';
@@ -20,8 +22,19 @@ import GameHUD from './GameHUD';
 import LevelComplete3D from './LevelComplete3D';
 import MissionCard from './MissionCard';
 import VirtualControls from './VirtualControls';
+import ChapterSelect, { type ChapterProgress } from './ChapterSelect';
+import LevelSelectChapter from './LevelSelectChapter';
 
-type Game3DScreen = 'home' | 'mission' | 'playing' | 'complete' | 'parent' | 'stickers' | 'rest';
+type Game3DScreen =
+  | 'home'
+  | 'chapters'
+  | 'levels'
+  | 'mission'
+  | 'playing'
+  | 'complete'
+  | 'parent'
+  | 'stickers'
+  | 'rest';
 
 const DEFAULT_CONFIG: ParentConfig = {
   totalTasks: 5,
@@ -46,12 +59,27 @@ function getUnlocked3DLevel() {
   return Math.min(LEVELS_3D.length, progress.driving3d?.currentLevel ?? 1);
 }
 
+function buildChapterProgress(starsByLevel: Record<string, number>): Record<number, ChapterProgress> {
+  const out: Record<number, ChapterProgress> = {};
+  for (const ch of CHAPTERS_3D) {
+    let completed = 0;
+    let totalStars = 0;
+    for (let n = 1; n <= 10; n++) {
+      const id = (ch.id - 1) * 10 + n;
+      const stars = starsByLevel[String(id)] ?? 0;
+      if (stars > 0) completed += 1;
+      totalStars += stars;
+    }
+    out[ch.id] = { completed, totalStars };
+  }
+  return out;
+}
+
 export default function Game3DPage() {
-  const debugLandscape = typeof window !== 'undefined'
-    && new URLSearchParams(window.location.search).has('debugLandscape');
   const [config, setConfig] = useState(() => normalizeConfig(loadConfig() ?? {}));
   const [screen, setScreen] = useState<Game3DScreen>('home');
   const [level, setLevel] = useState<Level3D>(() => getLevel3D(getUnlocked3DLevel()));
+  const [activeChapter, setActiveChapter] = useState<Chapter3D>(() => chapterOfLevel(getUnlocked3DLevel()));
   const [progressVersion, setProgressVersion] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -62,6 +90,7 @@ export default function Game3DPage() {
   const [lastStars, setLastStars] = useState(3);
   const [sessionLevels, setSessionLevels] = useState(0);
   const [startedAt, setStartedAt] = useState(Date.now());
+  const [chapterStickerJustUnlocked, setChapterStickerJustUnlocked] = useState<string | null>(null);
   const { controls, setControl, resetControls } = useDrivingControls();
   const usage = useDailyUsage(config.dailyMinutes);
 
@@ -83,10 +112,21 @@ export default function Game3DPage() {
     return getUnlocked3DLevel();
   }, [progressVersion]);
 
+  const starsByLevel = useMemo<Record<string, number>>(() => {
+    progressVersion;
+    return (loadProgress().driving3d?.stars as Record<string, number>) ?? {};
+  }, [progressVersion]);
+
+  const chapterProgress = useMemo(
+    () => buildChapterProgress(starsByLevel),
+    [starsByLevel],
+  );
+
   const startLevel = (nextLevel: Level3D) => {
     if (usage.limitReached) return;
     playSound('click');
     setLevel(nextLevel);
+    setActiveChapter(chapterOfLevel(nextLevel.id));
     setScreen('mission');
     setHint(nextLevel.mission);
   };
@@ -114,6 +154,16 @@ export default function Game3DPage() {
     });
     setSessionLevels((value) => value + 1);
     setProgressVersion((value) => value + 1);
+
+    // 章节末关：颁发章节贴纸
+    if (isChapterEndLevel(level.id)) {
+      const ch = chapterOfLevel(level.id);
+      const sticker = awardSticker(ch.stickerId);
+      if (sticker) setChapterStickerJustUnlocked(ch.stickerId);
+    } else {
+      setChapterStickerJustUnlocked(null);
+    }
+
     setScreen('complete');
   };
 
@@ -123,7 +173,13 @@ export default function Game3DPage() {
       setScreen('rest');
       return;
     }
-    startLevel(getLevel3D(Math.min(LEVELS_3D.length, level.id + 1)));
+    const nextId = Math.min(LEVELS_3D.length, level.id + 1);
+    if (nextId === level.id) {
+      // 已经是 100 关，回首页
+      setScreen('home');
+      return;
+    }
+    startLevel(getLevel3D(nextId));
   };
 
   const toggleSound = () => {
@@ -138,23 +194,25 @@ export default function Game3DPage() {
     setScreen('home');
   };
 
+  const currentChapter = chapterOfLevel(unlockedLevel);
+
   return (
-    <main className={`game3d-page ${debugLandscape ? 'debug-landscape' : ''}`}>
+    <main className="game3d-page">
       {screen === 'home' && (
         <section className="game3d-home">
           <div className="game3d-home-top">
             <div>
               <h1>小小汽车 3D 驾驶</h1>
-              <p>今日已玩 {Math.floor(usage.usage.seconds / 60)} / {config.dailyMinutes} 分钟</p>
+              <p>今日已玩 {Math.floor(usage.usage.seconds / 60)} / {config.dailyMinutes} 分钟 · 第 {unlockedLevel} / {LEVELS_3D.length} 关</p>
             </div>
-            <strong>已到第 {unlockedLevel} 关</strong>
+            <strong>{currentChapter.emoji} 第 {currentChapter.id} 章</strong>
           </div>
+
           <div className="game3d-garage-preview">
             <div className="game3d-preview-road" />
-            <div className="game3d-preview-car">
-              <span />
-            </div>
+            <div className="game3d-preview-car"><span /></div>
           </div>
+
           <div className="game3d-home-actions">
             <button
               className="game3d-primary"
@@ -162,8 +220,9 @@ export default function Game3DPage() {
               disabled={usage.limitReached}
               type="button"
             >
-              {usage.limitReached ? '今天任务完成啦' : '开始驾驶'}
+              {usage.limitReached ? '今天任务完成啦' : `继续第 ${unlockedLevel} 关`}
             </button>
+            <button onClick={() => setScreen('chapters')} type="button">章节选关</button>
             <button onClick={() => setScreen('stickers')} type="button">贴纸册</button>
             <button
               onPointerDown={(event) => {
@@ -178,20 +237,49 @@ export default function Game3DPage() {
               家长设置 长按
             </button>
           </div>
-          <div className="game3d-level-strip">
-            {LEVELS_3D.map((item) => (
-              <button
-                key={item.id}
-                disabled={item.id > unlockedLevel}
-                onClick={() => startLevel(item)}
-                type="button"
-              >
-                <span>第 {item.id} 关</span>
-                <small>{item.name}</small>
-              </button>
-            ))}
+
+          {/* 简化首页：只展示当前章节 + 下一章节卡片 */}
+          <div className="game3d-chapter-strip">
+            {[currentChapter.id, currentChapter.id + 1]
+              .filter((id) => id >= 1 && id <= 10)
+              .map((id) => {
+                const ch = CHAPTERS_3D[id - 1];
+                const prog = chapterProgress[id] ?? { completed: 0, totalStars: 0 };
+                const firstLevel = (id - 1) * 10 + 1;
+                const lockedHere = unlockedLevel < firstLevel;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    disabled={lockedHere}
+                    onClick={() => { setActiveChapter(ch); setScreen('levels'); }}
+                  >
+                    <span>{ch.emoji} 第 {ch.id} 章</span>
+                    <small>{ch.title} · {prog.completed}/10</small>
+                  </button>
+                );
+              })}
           </div>
         </section>
+      )}
+
+      {screen === 'chapters' && (
+        <ChapterSelect
+          unlockedLevel={unlockedLevel}
+          progress={chapterProgress}
+          onSelect={(ch) => { setActiveChapter(ch); setScreen('levels'); }}
+          onBack={() => setScreen('home')}
+        />
+      )}
+
+      {screen === 'levels' && (
+        <LevelSelectChapter
+          chapter={activeChapter}
+          unlockedLevel={unlockedLevel}
+          starsByLevel={starsByLevel}
+          onPick={(id) => startLevel(getLevel3D(id))}
+          onBack={() => setScreen('chapters')}
+        />
       )}
 
       {screen === 'mission' && (
@@ -237,6 +325,7 @@ export default function Game3DPage() {
         <LevelComplete3D
           level={level}
           stars={lastStars}
+          chapterStickerId={chapterStickerJustUnlocked}
           onNext={goNext}
           onRetry={() => startLevel(level)}
           onHome={() => setScreen('home')}
