@@ -1,41 +1,34 @@
 import { useState } from 'react';
-import type { MiniGameProps } from '../types';
-import { randomInt } from '../utils/random';
+import type { LevelGameProps } from '../types';
 import { playSound } from '../utils/sound';
+import { getGameDefinition } from '../data/games';
 
-export default function BusPickupGame({ onComplete }: MiniGameProps) {
-  const [round, setRound] = useState(1);
-  const [target, setTarget] = useState(() => randomInt(1, 5));
+export default function BusPickupGame({ level, onComplete }: LevelGameProps) {
+  const target = Number(level.config?.count ?? level.level);
   const [selected, setSelected] = useState(0);
-  const [stars, setStars] = useState(0);
-  const [hint, setHint] = useState('点小朋友上车。');
+  const [hint, setHint] = useState(`接 ${target} 个小朋友。`);
+  const game = getGameDefinition('bus-pickup');
 
-  const next = () => {
+  const go = () => {
     if (selected === target) {
-      const nextStars = stars + 1;
-      playSound('success');
-      setStars(nextStars);
-      setHint('人数正好，出发去幼儿园！');
-      if (round >= 3) {
-        setTimeout(() => onComplete({ gameId: 'bus-pickup', stars: nextStars, stickerId: 'little-bus' }), 650);
-      } else {
-        setTimeout(() => {
-          setRound((n) => n + 1);
-          setTarget(randomInt(1, 5));
-          setSelected(0);
-          setHint('点小朋友上车。');
-        }, 600);
-      }
+      playSound('complete');
+      onComplete({
+        gameId: 'bus-pickup',
+        level: level.level,
+        stars: 3,
+        stickerId: level.level >= 5 ? game.stickerId : undefined,
+        learningGoal: level.learningGoal,
+        summary: level.summary,
+      });
     } else {
       playSound('fail');
-      setHint(selected < target ? `还要再接 ${target - selected} 个。` : `多啦，我们只接 ${target} 个。`);
+      setHint(selected < target ? `还要再接 ${target - selected} 个。` : `多啦，只接 ${target} 个。`);
     }
   };
 
   return (
-    <div className="mini-game bus-mini">
-      <div className="mini-top">第 {round} / 3 轮 <span>{'⭐'.repeat(stars)}</span></div>
-      <div className="mini-hint">接 {target} 个小朋友去幼儿园</div>
+    <div className="level-game bus-mini">
+      <div className="mini-top">第 {level.level} 关 <span>接 {target} 个</span></div>
       <div className="bus-road">
         <div className="bus-body">🚌</div>
         <div className="school-stop">🏫</div>
@@ -55,7 +48,7 @@ export default function BusPickupGame({ onComplete }: MiniGameProps) {
           </button>
         ))}
       </div>
-      <button className="mini-primary" onClick={next} type="button">出发</button>
+      <button className="mini-primary" onClick={go} type="button">开到幼儿园</button>
       <div className="mini-hint small">{hint}</div>
     </div>
   );

@@ -5,6 +5,9 @@ import type { ParentConfig } from '../types';
 
 const KEY_PLAY_RECORD = 'kdjs:playRecord:v1';
 const KEY_CONFIG = 'kdjs:config:v1';
+const KEY_USAGE = 'kdjs:usage:v2';
+const KEY_PROGRESS = 'kdjs:progress:v2';
+const KEY_LEARNING = 'kdjs:learning:v2';
 
 interface PlayRecord {
   date: string; // 格式: YYYY-MM-DD
@@ -86,4 +89,93 @@ export function loadConfig(): Partial<ParentConfig> | null {
 
 export function saveConfig(c: ParentConfig): void {
   safeSet(KEY_CONFIG, JSON.stringify(c));
+}
+
+export interface DailyUsage {
+  date: string;
+  seconds: number;
+  completedLevels: number;
+}
+
+export type GameProgress = Record<string, {
+  currentLevel: number;
+  stars: Record<string, number>;
+}>;
+
+export interface LearningRecord {
+  date: string;
+  gameId: string;
+  level: number;
+  learningGoal: string;
+  summary: string;
+}
+
+export function getDailyUsage(): DailyUsage {
+  const today = todayString();
+  const raw = safeGet(KEY_USAGE);
+  if (!raw) return { date: today, seconds: 0, completedLevels: 0 };
+  try {
+    const parsed = JSON.parse(raw) as DailyUsage;
+    if (parsed.date !== today) return { date: today, seconds: 0, completedLevels: 0 };
+    return parsed;
+  } catch {
+    return { date: today, seconds: 0, completedLevels: 0 };
+  }
+}
+
+export function addDailyUsage(seconds: number): DailyUsage {
+  const cur = getDailyUsage();
+  const next = {
+    date: todayString(),
+    seconds: cur.seconds + Math.max(1, Math.round(seconds)),
+    completedLevels: cur.completedLevels + 1,
+  };
+  safeSet(KEY_USAGE, JSON.stringify(next));
+  return next;
+}
+
+export function resetDailyUsage(): void {
+  safeSet(KEY_USAGE, JSON.stringify({ date: todayString(), seconds: 0, completedLevels: 0 }));
+}
+
+export function loadProgress(): GameProgress {
+  const raw = safeGet(KEY_PROGRESS);
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as GameProgress;
+  } catch {
+    return {};
+  }
+}
+
+export function saveProgress(progress: GameProgress): void {
+  safeSet(KEY_PROGRESS, JSON.stringify(progress));
+}
+
+export function updateLevelProgress(gameId: string, level: number, stars: number): GameProgress {
+  const progress = loadProgress();
+  const entry = progress[gameId] ?? { currentLevel: 1, stars: {} };
+  const oldStars = entry.stars[String(level)] ?? 0;
+  entry.stars[String(level)] = Math.max(oldStars, stars);
+  entry.currentLevel = Math.max(entry.currentLevel, Math.min(30, level + 1));
+  progress[gameId] = entry;
+  saveProgress(progress);
+  return progress;
+}
+
+export function loadLearningRecords(): LearningRecord[] {
+  const raw = safeGet(KEY_LEARNING);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addLearningRecord(record: Omit<LearningRecord, 'date'>): void {
+  const records = loadLearningRecords();
+  records.unshift({ ...record, date: todayString() });
+  safeSet(KEY_LEARNING, JSON.stringify(records.slice(0, 40)));
 }

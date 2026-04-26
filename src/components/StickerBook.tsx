@@ -8,40 +8,27 @@ export default function StickerBook({ onBack }: StickerBookProps) {
   const owned = new Set(loadStickers());
 
   return (
-    <div className="sticker-book">
-      <h2>我的汽车贴纸册</h2>
-      <p className="sticker-count">
-        已收集 {owned.size} / {STICKER_POOL.length}
-      </p>
+    <main className="panel-screen sticker-book">
+      <header className="panel-header">
+        <button onClick={onBack} type="button">返回</button>
+        <h1>贴纸册</h1>
+        <span>{owned.size} / {STICKER_POOL.length}</span>
+      </header>
 
-      <div className="sticker-grid">
-        {STICKER_POOL.map((s) => {
-          const has = owned.has(s.id);
+      <section className="sticker-grid">
+        {STICKER_POOL.map((sticker) => {
+          const hasSticker = owned.has(sticker.id);
           return (
-            <div
-              key={s.id}
-              className={`sticker-cell ${has ? 'owned' : 'locked'}`}
-            >
-              <div
-                className="sticker-emoji"
-                style={{ background: has ? s.color : '#d8d8d8' }}
-                aria-hidden
-              >
-                {has ? s.emoji : '🔒'}
+            <div key={sticker.id} className={`sticker-cell ${hasSticker ? 'owned' : 'locked'}`}>
+              <div className="sticker-emoji" style={{ background: hasSticker ? sticker.color : '#d8d8d8' }}>
+                {hasSticker ? sticker.emoji : '🔒'}
               </div>
-              <div className="sticker-name">
-                {has ? s.name : '尚未收集'}
-              </div>
+              <strong>{hasSticker ? sticker.name : '还没解锁'}</strong>
+              <small>{hasSticker ? '已经收集' : '完成第 5 关解锁'}</small>
             </div>
           );
         })}
-      </div>
-
-      <div className="sticker-back-row">
-        <button className="btn btn-ghost" onClick={onBack}>
-          返回
-        </button>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

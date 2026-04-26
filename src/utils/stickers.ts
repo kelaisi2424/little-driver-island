@@ -7,11 +7,11 @@ export interface Sticker {
 
 export const STICKER_POOL: readonly Sticker[] = [
   { id: 'safe-car', color: '#ff8c69', name: '安全小车贴纸', emoji: '🚗' },
-  { id: 'parking-p', color: '#4a90e2', name: '停车 P 贴纸', emoji: '🅿️' },
+  { id: 'parking-master', color: '#4a90e2', name: '停车高手贴纸', emoji: '🅿️' },
   { id: 'traffic-light', color: '#5cd684', name: '红绿灯贴纸', emoji: '🚦' },
-  { id: 'bubble-car', color: '#7ad6f6', name: '泡泡车贴纸', emoji: '🫧' },
   { id: 'little-bus', color: '#ffd166', name: '小巴士贴纸', emoji: '🚌' },
-  { id: 'wrench', color: '#a07ad6', name: '小扳手贴纸', emoji: '🔧' },
+  { id: 'curve-driver', color: '#a07ad6', name: '弯道小达人贴纸', emoji: '🏁' },
+  { id: 'school-driver', color: '#7ad6b8', name: '安全到幼儿园贴纸', emoji: '🏫' },
 ];
 
 const KEY_STICKERS = 'kdjs:stickers:v1';
@@ -44,29 +44,19 @@ export function loadStickers(): string[] {
 }
 
 export function getStickerById(id: string): Sticker | undefined {
-  return STICKER_POOL.find((s) => s.id === id);
+  return STICKER_POOL.find((sticker) => sticker.id === id);
 }
 
 export function awardSticker(stickerId: string): Sticker | null {
   const owned = loadStickers();
-  if (owned.includes(stickerId)) return getStickerById(stickerId) ?? null;
-  safeSet(KEY_STICKERS, JSON.stringify([...owned, stickerId]));
+  if (!owned.includes(stickerId)) {
+    safeSet(KEY_STICKERS, JSON.stringify([...owned, stickerId]));
+  }
   return getStickerById(stickerId) ?? null;
-}
-
-export function awardNextSticker(): Sticker | null {
-  const owned = new Set(loadStickers());
-  const next = STICKER_POOL.find((s) => !owned.has(s.id));
-  if (!next) return null;
-  return awardSticker(next.id);
 }
 
 export function getOwnedStickers(): Sticker[] {
   return loadStickers()
     .map((id) => getStickerById(id))
-    .filter((s): s is Sticker => Boolean(s));
-}
-
-export function isAllStickersCollected(): boolean {
-  return loadStickers().length >= STICKER_POOL.length;
+    .filter((sticker): sticker is Sticker => Boolean(sticker));
 }
